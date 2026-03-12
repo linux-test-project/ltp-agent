@@ -109,6 +109,17 @@ When reviewing or writing C tests, verify ALL of the following:
 
 - MUST NOT define `[Description]` in the test description section
 
+## New Syscalls Testing
+
+When introducing new tests for new syscalls, ALWAYS update the architectures
+syscalls files at `include/lapi/syscalls/*.in` by running the command:
+
+```sh
+./include/lapi/syscalls/generate_arch.sh <linux code>
+```
+
+Where `<linux code>` is the folder with the Linux Kernel source code.
+
 ## Code Examples
 
 The following sections contain examples which are considered reference when
