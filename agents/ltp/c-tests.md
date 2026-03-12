@@ -116,7 +116,7 @@ rewriting old LTP tests or when writing new LTP tests.
 
 ALWAYS follow these rules.
 
-### New LTP API usage
+### LTP API usage
 
 #### Use the correct import
 
@@ -130,6 +130,9 @@ ALWAYS follow these rules.
 
 #### Use SAFE\_\* macros
 
+ALWAYS verify that syscalls we are using have a `SAFE_*` version associated
+with it. If it exists, use it. If it doesn't, verify if you can create it.
+
 ```c
 /* WRONG: don't use plain syscalls */
 int fd = open("test_file", O_RDWR | O_CREAT, 0644);
@@ -141,7 +144,7 @@ if (fd > 0) {
 int fd = SAFE_OPEN("test_file", O_RDWR | O_CREAT, 0644);
 ```
 
-### SAFE\_\* macros definition
+### New SAFE\_\* macros definition
 
 #### Don't use `cleanup_fn` in newly added `safe_*` definitions
 
