@@ -74,7 +74,7 @@ When reviewing or writing C tests, verify ALL of the following:
 
 ### 6. Safe Macros
 
-- MUST use `SAFE_*` macros for system calls that must not fail
+- MUST use `SAFE_*` macros for ALL system calls everywhere in the test
 - Safe macros are defined in `include/` directory
 
 ### 7. Kernel Version Handling
