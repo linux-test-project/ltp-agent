@@ -20,7 +20,7 @@ Every C test MUST follow this structure:
  * The following part is OPTIONAL:
  * [Algorithm]
  *
- * Explaination of how algorithm in the test works in a list (-) syntax.
+ * Explanation of how algorithm in the test works in a list (-) syntax.
  */
 
 #include "tst_test.h"
@@ -74,8 +74,9 @@ When reviewing or writing C tests, verify ALL of the following:
 
 ### 6. Safe Macros
 
-- MUST use `SAFE_*` macros for ALL system calls everywhere in the test
-- Safe macros are defined in `include/` directory
+- MUST use `SAFE_*` macros for system calls that have a `SAFE_*` version in `include/`
+- Safe macros are defined in `include/` directory (search `tst_*.h` headers)
+- If no `SAFE_*` version exists, verify whether one can be added; otherwise use manual error handling
 
 ### 7. Kernel Version Handling
 
@@ -155,7 +156,7 @@ doesn't, verify if you can create it.
 ```c
 /* WRONG: don't use plain syscalls */
 int fd = open("test_file", O_RDWR | O_CREAT, 0644);
-if (fd > 0) {
+if (fd < 0) {
     tst_brk(TBROK | TERRNO, "open() error");
 }
 
@@ -215,7 +216,7 @@ static void setup(void) {
 }
 
 static void cleanup(void) {
-    if (fd > 0)
+    if (fd != -1)
         SAFE_CLOSE(fd);
 }
 
@@ -237,7 +238,7 @@ static void setup(void) {
 }
 
 static void cleanup(void) {
-    if (fd > 0)
+    if (fd != -1)
         SAFE_CLOSE(fd);
 }
 
@@ -269,7 +270,7 @@ static void setup(void) {
 }
 
 static void cleanup(void) {
-    if (fd > 0)
+    if (fd != -1)
         SAFE_CLOSE(fd);
 }
 
@@ -296,7 +297,7 @@ static void setup(void) {
 }
 
 static void cleanup(void) {
-    if (fd > 0)
+    if (fd != -1)
         SAFE_CLOSE(fd);
 }
 
@@ -346,7 +347,7 @@ static void setup(void) {
 
 /* CORRECT: close file descriptors at cleanup */
 static void cleanup(void) {
-    if (fd > 0)
+    if (fd != -1)
         SAFE_CLOSE(fd);
 }
 
@@ -557,7 +558,9 @@ TST_EXP_FAIL(open("/nonexistent", O_RDONLY), ENOENT);
 
 #### TFAIL on expected syscall failure (positive success)
 
-ALWAYS use `TST_EXP_FAIL2` when syscall returns positive on success:
+ALWAYS use `TST_EXP_FAIL2` when syscall returns positive on success (e.g.
+returns a PID, fd, or byte count). Use `TST_EXP_FAIL` (without `2`) when
+syscall returns 0 on success.
 
 ```c
 /* WRONG: manual failure check for fork */
@@ -627,6 +630,13 @@ ALWAYS use `TST_EXP_FAIL_PTR_NULL_ARR` when syscall should fail with NULL and
 one of several errnos:
 
 ```c
+/* WRONG: multiple errno checks with manual NULL pointer check */
+TEST(ptr = malloc_invalid(size));
+if (TST_RET_PTR != NULL || (TST_ERR != EINVAL && TST_ERR != ENOMEM))
+    tst_res(TFAIL | TTERRNO, "Expected EINVAL or ENOMEM");
+else
+    tst_res(TPASS | TTERRNO, "malloc_invalid failed as expected");
+
 /* CORRECT: check NULL return with multiple possible errors */
 int errors[] = {EINVAL, ENOMEM};
 TST_EXP_FAIL_PTR_NULL_ARR(malloc_invalid(size), errors, 2);
@@ -638,6 +648,13 @@ ALWAYS use `TST_EXP_FAIL_PTR_VOID_ARR` when syscall should fail with
 `(void *)-1` and one of several errnos:
 
 ```c
+/* WRONG: multiple errno checks with manual MAP_FAILED check */
+TEST(ptr = mmap_invalid(NULL, size, prot, flags, -1, 0));
+if (TST_RET_PTR != MAP_FAILED || (TST_ERR != EINVAL && TST_ERR != ENOMEM))
+    tst_res(TFAIL | TTERRNO, "Expected EINVAL or ENOMEM");
+else
+    tst_res(TPASS | TTERRNO, "mmap_invalid failed as expected");
+
 /* CORRECT: check MAP_FAILED with multiple possible errors */
 int errors[] = {EINVAL, ENOMEM};
 TST_EXP_FAIL_PTR_VOID_ARR(mmap_invalid(NULL, size, prot, flags, -1, 0), errors, 2);
@@ -759,6 +776,33 @@ static struct tst_test test = {
     .test_all = run,
 };
 ```
+
+#### Use `.bufs` for framework-managed allocations
+
+When a buffer only needs to exist for the duration of the test, use `.bufs` in
+`struct tst_test` instead of `malloc()`/`free()` in setup/cleanup. The
+framework allocates and frees these automatically — no cleanup needed.
+
+```c
+static struct my_struct *buf;
+
+static void run(void)
+{
+    /* buf is already allocated by the framework */
+    buf->field = 42;
+    ...
+}
+
+static struct tst_test test = {
+    .test_all = run,
+    .bufs = (struct tst_buffers []) {
+        {&buf, .size = sizeof(*buf)},
+        {},
+    },
+};
+```
+
+When `.bufs` is used, skip the memory deallocation check for those buffers.
 
 #### Memory re-initialization for iterative testing (-i parameter)
 
