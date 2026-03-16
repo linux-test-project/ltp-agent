@@ -152,7 +152,33 @@ Apply `c-tests.md` result-reporting rules:
 - Use `TST_EXP_FD` when checking fd return values
 - Return `TCONF` (not `TFAIL`) when a feature is unavailable
 
-### 3.5 One Commit Per File
+### 3.5 Conversion Examples
+
+#### `HAVE_*` Header Guards
+
+If the original test has a `HAVE_*` guard, preserve it. Replace the old
+fallback `main()` with `TST_TEST_TCONF(...)`. Use a single `#ifdef` block
+covering both the optional include and all test code:
+
+```c
+#include "config.h"
+#include "tst_test.h"
+
+#ifdef HAVE_SYS_XATTR_H
+# include <sys/xattr.h>
+
+/* test code */
+
+static struct tst_test test = {
+    .test_all = run,
+};
+
+#else
+TST_TEST_TCONF("<sys/xattr.h> does not exist");
+#endif
+```
+
+### 3.6 One Commit Per File
 
 Each converted file MUST be committed separately using `git commit -s` to
 automatically add the correct `Signed-off-by` from the git config:
