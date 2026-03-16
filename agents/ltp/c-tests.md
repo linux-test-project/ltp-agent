@@ -107,7 +107,14 @@ When reviewing or writing C tests, verify ALL of the following:
 - MUST use `snprintf()` when combining strings
 - MUST use `PATH_MAX` for path buffers, NOT custom size macros
 
-### 13. Deprecated Features
+### 13. Architecture-Specific Tests
+
+- MUST use `.supported_archs` in `struct tst_test` when the target architectures
+  are supported by the framework (see `lib/tst_arch.c`)
+- `#if defined(...)` arch guards are only acceptable when the target architecture
+  is not supported by the framework
+
+### 14. Deprecated Features
 
 - MUST NOT define `[Description]` in the test description section
 
@@ -135,6 +142,36 @@ The following sections contain examples which are considered reference when
 rewriting old LTP tests or when writing new LTP tests.
 
 ALWAYS follow these rules.
+
+### Architecture-Specific Tests
+
+When the target architectures are supported by the framework, do NOT use
+preprocessor arch guards:
+
+```c
+/* WRONG: use .supported_archs instead when architectures are supported by the framework */
+#if defined(__i386__) || defined(__x86_64__)
+static void run(void)
+{
+    /* test logic */
+}
+#endif
+};
+```
+
+CORRECT: use `.supported_archs` in `struct tst_test`:
+
+```c
+/* CORRECT: runtime arch check via the framework */
+static struct tst_test test = {
+    .test_all = run,
+    .supported_archs = (const char *const []) {
+        "x86_64",
+        "x86",
+        NULL
+    },
+};
+```
 
 ### LTP API usage
 
