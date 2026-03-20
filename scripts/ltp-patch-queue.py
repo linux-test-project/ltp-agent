@@ -3,7 +3,7 @@
 ltp-patch-queue: Evaluate and rank pending LTP patches by review priority.
 
 Usage:
-    ./ltp-patch-queue.py                  # quick mode (subject heuristics for lib detection)
+    ./ltp-patch-queue.py                  # quick mode; states: new, under-review, needs-review-ack
     ./ltp-patch-queue.py --diffs          # fetch full diffs (~1 req/patch): enables accurate
                                           #   lib/include detection, Fixes: tag, and SOB count
     ./ltp-patch-queue.py --no-tags        # ignore Reviewed-by, Acked-by, Signed-off-by
@@ -162,6 +162,12 @@ def lib_score_from_diff(diff_text: str) -> int:
 
 # ----- API helpers ------------------------------------------------------------
 
+# Some custom Patchwork states don't support filtering by slug name and
+# require a numeric ID instead.
+STATE_FILTER_ID = {
+    "needs-review-ack": 11,
+}
+
 
 def fetch_json(url: str) -> dict | list:
     req = Request(url, headers={"Accept": "application/json"})
@@ -170,14 +176,15 @@ def fetch_json(url: str) -> dict | list:
 
 
 def fetch_all_patches(
-    states=("new", "under-review"), max_patches=500
+    states=("new", "under-review", "needs-review-ack"), max_patches=500
 ) -> tuple[list, dict]:
     patches = []
     counts = {}
     for state in states:
+        filter_val = STATE_FILTER_ID.get(state, state)
         url = (
             f"{PATCHWORK_BASE}/patches/"
-            f"?project={PROJECT}&state={state}&order=-date&per_page=100"
+            f"?project={PROJECT}&state={filter_val}&order=-date&per_page=100"
         )
         state_count = 0
         while url and len(patches) < max_patches:
@@ -389,6 +396,7 @@ def print_pretty(scored: list, counts: dict) -> None:
     total = len(scored)
     new_count = counts.get("new", 0)
     under_count = counts.get("under-review", 0)
+    needs_review_count = counts.get("needs-review-ack", 0)
     stale_count = sum(1 for p in scored if p["days"] > 60)
     rfc_count = sum(1 for p in scored if p["rfc"])
     waiting_count = sum(1 for p in scored if p["reviewed"] >= 1)
@@ -397,7 +405,7 @@ def print_pretty(scored: list, counts: dict) -> None:
 
     print(f"\n{BOLD}LTP Patch Review Queue — {TODAY}{RESET}\n")
     print(f"Fetched {BOLD}{total}{RESET} patches"
-          f"  (new: {new_count}  under-review: {under_count})\n")
+          f"  (new: {new_count}  under-review: {under_count}  needs-review: {needs_review_count})\n")
     print(rule)
 
     grouped = {tier_id: [] for _, tier_id, _ in TIERS}
