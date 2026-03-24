@@ -789,6 +789,37 @@ else
 TST_EXP_EXPR(uid > 0 && gid > 0, "IDs should be positive");
 ```
 
+#### TBROK for syscall failures, not TINFO | TERRNO
+
+NEVER use `tst_res(TINFO | TERRNO, ...)` to report syscall failures:
+
+```c
+/* WRONG: TINFO | TERRNO misused for error reporting */
+fd = open(path, O_RDWR);
+if (fd < 0) {
+    tst_res(TINFO | TERRNO, "open failed");
+    exit(1);
+}
+
+ptr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+if (ptr == MAP_FAILED) {
+    tst_res(TINFO | TERRNO, "mmap failed");
+    SAFE_CLOSE(fd);
+    exit(1);
+}
+
+/* CORRECT: use TBROK | TERRNO for syscall errors */
+fd = open(path, O_RDWR);
+if (fd < 0)
+    tst_brk(TBROK | TERRNO, "open failed");
+
+ptr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+if (ptr == MAP_FAILED) {
+    SAFE_CLOSE(fd);
+    tst_brk(TBROK | TERRNO, "mmap failed");
+}
+```
+
 ### Memory Allocations
 
 #### Release mmap() allocations
