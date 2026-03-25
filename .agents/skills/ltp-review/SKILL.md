@@ -17,7 +17,7 @@ and correctness.
 
 ### Step 1.1: Load Rules
 
-Read `agents/ltp/ground-rules.md`.
+Read `agents/ground-rules.md`.
 
 ### Step 1.2: Verify patches are applied
 
@@ -36,15 +36,15 @@ The current branch already has the patches applied (master..HEAD).
 Use `git diff --name-only master..HEAD` to list changed files, then load
 corresponding rules:
 
-- Files in `testcases/open_posix_testsuite/` → Read `agents/ltp/openposix.md`
-- `*.c` or `*.h` (NOT in open_posix_testsuite) → Read `agents/ltp/c-tests.md`
-- `*.sh` → Read `agents/ltp/shell-tests.md`
+- Files in `testcases/open_posix_testsuite/` → Read `agents/openposix.md`
+- `*.c` or `*.h` (NOT in open_posix_testsuite) → Read `agents/c-tests.md`
+- `*.sh` → Read `agents/shell-tests.md`
 - Mixed → Read all applicable files
 
 **IMPORTANT**: Open POSIX tests use different APIs and conventions. Do NOT apply
 LTP C test rules to Open POSIX tests.
 
-**IMPORTANT**: `agents/ltp/c-tests.md` is the single source of truth for LTP C
+**IMPORTANT**: `agents/c-tests.md` is the single source of truth for LTP C
 test rules. The checklist below is a structural guide only — when `c-tests.md`
 and the inline checklist conflict, `c-tests.md` wins.
 
@@ -80,7 +80,7 @@ Mark ✅, ❌, or N/A.
 
 ### LTP C Test Rules
 
-Apply ALL rules from `agents/ltp/c-tests.md` (already loaded in Step 1.3).
+Apply ALL rules from `agents/c-tests.md` (already loaded in Step 1.3).
 Do not rely on memory or prior knowledge — use the live file content.
 
 Key structural checks (verify these explicitly):
@@ -100,12 +100,12 @@ Key structural checks (verify these explicitly):
 
 For code patterns (string handling, memory allocation, fd init, PATH_MAX,
 parametrization, child processes, etc.) apply the examples from
-`agents/ltp/c-tests.md` directly — those examples are the authoritative
+`agents/c-tests.md` directly — those examples are the authoritative
 WRONG/CORRECT reference.
 
 ### LTP Shell Test Rules
 
-Apply ALL rules from `agents/ltp/shell-tests.md` (already loaded in Step 1.3).
+Apply ALL rules from `agents/shell-tests.md` (already loaded in Step 1.3).
 Do not rely on memory or prior knowledge — use the live file content.
 
 Key structural checks (verify these explicitly):

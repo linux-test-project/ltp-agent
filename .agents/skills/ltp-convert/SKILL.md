@@ -16,8 +16,8 @@ The user will provide a file path or test name to convert.
 
 Read these files before doing anything else:
 
-- `agents/ltp/ground-rules.md`
-- `agents/ltp/c-tests.md`
+- `agents/ground-rules.md`
+- `agents/c-tests.md`
 
 `c-tests.md` is the authoritative reference for what the converted test MUST
 look like. Every conversion decision must comply with it.

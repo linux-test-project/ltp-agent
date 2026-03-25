@@ -41,13 +41,13 @@ If no test files are found, **stop** and tell the user:
 
 ### Step 1.3: Load rules
 
-Read `agents/ltp/ground-rules.md`.
+Read `agents/ground-rules.md`.
 
 Identify the test type and load the corresponding rules:
 
-- `*.c` (NOT in `open_posix_testsuite/`) → Read `agents/ltp/c-tests.md`
-- `*.sh` → Read `agents/ltp/shell-tests.md`
-- Files in `testcases/open_posix_testsuite/` → Read `agents/ltp/openposix.md`
+- `*.c` (NOT in `open_posix_testsuite/`) → Read `agents/c-tests.md`
+- `*.sh` → Read `agents/shell-tests.md`
+- Files in `testcases/open_posix_testsuite/` → Read `agents/openposix.md`
 
 ## Phase 2: Build
 
@@ -69,7 +69,7 @@ For LTP C tests:
 make -C <test-dir> <testname>
 ```
 
-For Open POSIX tests, follow build instructions from `agents/ltp/openposix.md`.
+For Open POSIX tests, follow build instructions from `agents/openposix.md`.
 
 If compilation fails, **read the full error output** and the relevant source
 lines. Determine:
