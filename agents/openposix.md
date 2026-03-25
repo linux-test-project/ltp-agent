@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # Open POSIX Test Suite Rules
 
 This file contains MANDATORY rules for Open POSIX Test Suite tests located in

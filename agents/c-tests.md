@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # C Test Rules
 
 This file contains MANDATORY rules for C tests. Load this file when reviewing

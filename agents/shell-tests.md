@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # Shell Test Rules
 
 This file contains MANDATORY rules for shell tests. Load this file when

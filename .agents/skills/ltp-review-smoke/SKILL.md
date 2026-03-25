@@ -3,6 +3,8 @@ name: ltp-review-smoke
 description: LTP Patch Smoke Test — compile and run tests, then analyze failures
 ---
 
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # LTP Smoke Test Protocol
 
 You are an agent that compiles and runs LTP tests from a patch branch, then

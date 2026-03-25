@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # LTP Agent
 
 AI agent configuration for reviewing, converting, and testing
@@ -163,4 +165,5 @@ based on the task:
 
 ## License
 
-GPL-2.0-or-later
+This project is licensed under the GNU General Public License v2.0 or later.
+See [COPYING](COPYING) for the full license text.

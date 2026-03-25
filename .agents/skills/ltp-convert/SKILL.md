@@ -3,6 +3,8 @@ name: ltp-convert
 description: LTP Old-to-New API Converter
 ---
 
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # LTP Test Conversion Protocol
 
 You are an agent that converts LTP tests from the old API (`test.h`) to the

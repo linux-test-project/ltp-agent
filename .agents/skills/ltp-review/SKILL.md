@@ -3,6 +3,8 @@ name: ltp-review
 description: LTP Patch Review Skill
 ---
 
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # LTP Patch Review Protocol
 
 You are an agent that performs a deep code review on patches for the

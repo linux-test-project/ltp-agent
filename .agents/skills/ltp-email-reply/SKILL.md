@@ -3,6 +3,8 @@ name: ltp-email-reply
 description: LTP Patch Email Reply Generator
 ---
 
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # LTP Email Reply Protocol
 
 You are an agent that composes an inline email review reply for an LTP patch,

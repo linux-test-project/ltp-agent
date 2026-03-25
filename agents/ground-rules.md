@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # Ground Rules
 
 These rules are **MANDATORY** and must **NEVER** be violated when writing or

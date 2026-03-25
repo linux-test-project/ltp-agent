@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+
 # Linux Test Project (LTP)
 
 LTP delivers tests to the open source community that validate the
