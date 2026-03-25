@@ -91,3 +91,7 @@ Patches mixing unrelated changes will be delayed or ignored.
 
 Tests for features not yet in a mainline kernel release will NOT be merged into
 default test suites until the kernel code is finalized and released.
+
+**Before flagging a test as staging**, verify whether the kernel version has
+actually been released. Do NOT assume a version is unreleased based on the
+number alone. Check https://kernel.org to confirm the latest stable release.
