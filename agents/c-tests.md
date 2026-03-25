@@ -1098,6 +1098,50 @@ Note: `PATH_MAX` is for **full paths**. For buffers holding only a **filename**
 `struct inotify_event.name` stores a filename, so `NAME_MAX + 1` is correct
 there — not `PATH_MAX`.
 
+### Kernel Config Dependencies
+
+NEVER manually check for kernel config features by handling ioctl/syscall
+errors at runtime when `.needs_kconfigs` can be used:
+
+```c
+/* WRONG: manually handling missing kernel config */
+static void run(void)
+{
+    TEST(ioctl(dev_fd, FS_IOC_GETLBMD_CAP, meta_cap));
+    if (TST_RET == -1 && TST_ERR == EINVAL)
+        tst_brk(TCONF, "CONFIG_BLK_DEV_INTEGRITY is not enabled");
+
+    /* ... */
+}
+
+static struct tst_test test = {
+    .test_all = run,
+    .needs_device = 1,
+};
+```
+
+ALWAYS use `.needs_kconfigs` to gate on required kernel configuration options:
+
+```c
+/* CORRECT: framework checks kernel config before running the test */
+static void run(void)
+{
+    TST_EXP_PASS(ioctl(dev_fd, FS_IOC_GETLBMD_CAP, meta_cap),
+        "FS_IOC_GETLBMD_CAP on block device");
+
+    /* ... */
+}
+
+static struct tst_test test = {
+    .test_all = run,
+    .needs_device = 1,
+    .needs_kconfigs = (const char *[]) {
+        "CONFIG_BLK_DEV_INTEGRITY=y",
+        NULL,
+    },
+};
+```
+
 ### Using Syscalls
 
 #### Using tst_syscall
