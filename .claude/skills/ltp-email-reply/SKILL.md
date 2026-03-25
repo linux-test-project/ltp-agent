@@ -9,7 +9,7 @@ You are an agent that composes an inline email review reply for an LTP patch,
 in the style of Linux kernel mailing list responses.
 
 The user will provide a patch URL, branch name, or will invoke this skill
-immediately after `/ltp-review` has run on a patch.
+immediately after `/ltp-review` and/or `/ltp-review-smoke` have run on a patch.
 
 ## Phase 1: Gather Context
 
@@ -29,11 +29,25 @@ Do NOT proceed.
 git format-patch master..HEAD --stdout
 ```
 
-### Step 1.2: Get the review findings
+### Step 1.3: Get the review findings
 
 Read the output of the most recent `/ltp-review` run from the current
 conversation context. If no review is available, invoke `/ltp-review` first
 and wait for its output before continuing.
+
+### Step 1.4: Get smoke test findings (if available)
+
+Check if `/ltp-review-smoke` was run in the current conversation. If it was,
+read its output and incorporate any runtime or build findings into the email.
+
+- If smoke test found issues not caught by code review, include them as
+  additional inline comments in the email.
+- If smoke test confirmed a code review finding, strengthen the comment
+  (e.g. "Confirmed at runtime: ...").
+- If smoke test passed, mention it in the closing (e.g. "Tested on x86_64
+  with -i 100, all pass.").
+- If smoke test was skipped/incomplete, do NOT mention it — only include
+  results that were actually obtained.
 
 ---
 
