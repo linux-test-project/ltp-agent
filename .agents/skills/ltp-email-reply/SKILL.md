@@ -108,9 +108,15 @@ Regards,
 
 ### Tone
 
-- Be direct and technical, as is standard on kernel mailing lists.
-- Do not be harsh, but do not soften bugs — state them clearly.
-- Positive feedback is only included if it adds information (e.g. "tested on
+- Be **terse**. Kernel mailing list replies are short and to the point.
+- Each inline comment should be 1-2 sentences max. State the problem and,
+  if not obvious, what to do instead. Do not elaborate beyond that.
+- Do NOT repeat what the code already shows — only say what is wrong or missing.
+- Do NOT add filler like "Good improvement" or "The rest looks correct" unless
+  it conveys genuinely useful information.
+- Skip the optional overall context/praise sentence unless there is something
+  non-obvious worth noting.
+- Positive feedback is only included if it adds information (e.g. "Tested on
   x86_64 with -i 100, all pass").
 
 ---
