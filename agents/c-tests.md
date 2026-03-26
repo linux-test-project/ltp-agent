@@ -480,6 +480,34 @@ static void cleanup(void) {
 }
 ```
 
+#### Use `fd != -1` to check file descriptor validity
+
+NEVER use `fd >= 0` or `fd > 0` to check whether a file descriptor is valid:
+
+```c
+/* WRONG: fd >= 0 is not the LTP convention */
+static void cleanup(void) {
+    if (fd >= 0)
+        SAFE_CLOSE(fd);
+}
+
+/* WRONG: fd > 0 silently skips fd 0 which is valid */
+static void cleanup(void) {
+    if (fd > 0)
+        SAFE_CLOSE(fd);
+}
+```
+
+ALWAYS use `fd != -1` since file descriptors are initialized to `-1`:
+
+```c
+/* CORRECT: matches the -1 initialization convention */
+static void cleanup(void) {
+    if (fd != -1)
+        SAFE_CLOSE(fd);
+}
+```
+
 ### Tests Results
 
 #### TPASS on numbers equality
