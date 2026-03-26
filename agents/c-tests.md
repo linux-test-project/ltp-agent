@@ -456,6 +456,30 @@ static struct tst_test test = {
 };
 ```
 
+#### No manual reset after SAFE_CLOSE
+
+`SAFE_CLOSE()` already resets the file descriptor to `-1` after closing.
+NEVER manually reset it afterwards:
+
+```c
+/* WRONG: redundant reset — SAFE_CLOSE() already sets fd = -1 */
+static void cleanup(void) {
+    if (fd != -1)
+        SAFE_CLOSE(fd);
+    fd = -1;
+}
+```
+
+ALWAYS rely on `SAFE_CLOSE()` to handle the reset:
+
+```c
+/* CORRECT: SAFE_CLOSE() sets fd = -1 internally */
+static void cleanup(void) {
+    if (fd != -1)
+        SAFE_CLOSE(fd);
+}
+```
+
 ### Tests Results
 
 #### TPASS on numbers equality
