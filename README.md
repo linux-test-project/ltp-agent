@@ -83,6 +83,18 @@ sources:
 ./ltp-agent/scripts/ltp-apply-patch.sh commit:abc1234
 ```
 
+### Cleaning Up Review Branches
+
+To delete all `review/*` branches created by `ltp-apply-patch.sh`:
+
+```sh
+# Interactive — lists branches and asks for confirmation
+./ltp-agent/scripts/ltp-review-cleanup.sh
+
+# Force — no confirmation prompt
+./ltp-agent/scripts/ltp-review-cleanup.sh -f
+```
+
 ### Reviewing a Patch
 
 With the patch applied, invoke the review skill inside your agent:
