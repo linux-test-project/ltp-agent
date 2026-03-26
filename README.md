@@ -60,39 +60,39 @@ and run them.
 ### Applying a Patch
 
 Before running any review or smoke test, apply the patch onto a review branch.
-The helper script `ltp-agent/scripts/ltp-apply-patch.sh` supports multiple
+The helper script `ltp-agent/scripts/apply-patch.sh` supports multiple
 sources:
 
 ```sh
 # Patchwork URL
-./ltp-agent/scripts/ltp-apply-patch.sh https://patchwork.ozlabs.org/project/ltp/patch/<id>/
+./ltp-agent/scripts/apply-patch.sh https://patchwork.ozlabs.org/project/ltp/patch/<id>/
 
 # Lore URL
-./ltp-agent/scripts/ltp-apply-patch.sh https://lore.kernel.org/ltp/<message-id>/
+./ltp-agent/scripts/apply-patch.sh https://lore.kernel.org/ltp/<message-id>/
 
 # GitHub PR
-./ltp-agent/scripts/ltp-apply-patch.sh https://github.com/linux-test-project/ltp/pull/42
+./ltp-agent/scripts/apply-patch.sh https://github.com/linux-test-project/ltp/pull/42
 
 # Local .patch or .mbox file
-./ltp-agent/scripts/ltp-apply-patch.sh /tmp/my-patch.mbox
+./ltp-agent/scripts/apply-patch.sh /tmp/my-patch.mbox
 
 # Existing branch
-./ltp-agent/scripts/ltp-apply-patch.sh branch:feature-xyz
+./ltp-agent/scripts/apply-patch.sh branch:feature-xyz
 
 # Specific commit
-./ltp-agent/scripts/ltp-apply-patch.sh commit:abc1234
+./ltp-agent/scripts/apply-patch.sh commit:abc1234
 ```
 
 ### Cleaning Up Review Branches
 
-To delete all `review/*` branches created by `ltp-apply-patch.sh`:
+To delete all `review/*` branches created by `apply-patch.sh`:
 
 ```sh
 # Interactive — lists branches and asks for confirmation
-./ltp-agent/scripts/ltp-review-cleanup.sh
+./ltp-agent/scripts/review-cleanup.sh
 
 # Force — no confirmation prompt
-./ltp-agent/scripts/ltp-review-cleanup.sh -f
+./ltp-agent/scripts/review-cleanup.sh -f
 ```
 
 ### Reviewing a Patch

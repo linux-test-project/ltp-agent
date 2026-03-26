@@ -6,7 +6,7 @@
 # Run this from inside an LTP git tree before invoking /ltp-review.
 #
 # Usage:
-#   ltp-apply-patch.sh <source>
+#   apply-patch.sh <source>
 #
 # Sources:
 #   <patchwork-url>    https://patchwork.ozlabs.org/project/ltp/patch/...
@@ -17,12 +17,12 @@
 #   <commit>           commit:<hash>
 #
 # Examples:
-#   ltp-apply-patch.sh https://patchwork.ozlabs.org/project/ltp/patch/abc123/
-#   ltp-apply-patch.sh https://lore.kernel.org/r/abc123/
-#   ltp-apply-patch.sh https://github.com/linux-test-project/ltp/pull/42
-#   ltp-apply-patch.sh /tmp/my-patch.mbox
-#   ltp-apply-patch.sh branch:feature-xyz
-#   ltp-apply-patch.sh commit:abc1234
+#   apply-patch.sh https://patchwork.ozlabs.org/project/ltp/patch/abc123/
+#   apply-patch.sh https://lore.kernel.org/r/abc123/
+#   apply-patch.sh https://github.com/linux-test-project/ltp/pull/42
+#   apply-patch.sh /tmp/my-patch.mbox
+#   apply-patch.sh branch:feature-xyz
+#   apply-patch.sh commit:abc1234
 
 set -e
 

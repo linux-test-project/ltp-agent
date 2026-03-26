@@ -2,18 +2,18 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (c) 2026 Andrea Cervesato <andrea.cervesato@suse.com>
 #
-# Delete all local 'review/*' branches created by ltp-apply-patch.sh.
+# Delete all local 'review/*' branches created by apply-patch.sh.
 # Run this from inside an LTP git tree.
 #
 # Usage:
-#   ltp-review-cleanup.sh [-f]
+#   review-cleanup.sh [-f]
 #
 # Options:
 #   -f    Force delete without confirmation
 #
 # Examples:
-#   ltp-review-cleanup.sh       # interactive, asks before deleting
-#   ltp-review-cleanup.sh -f    # delete all review branches immediately
+#   review-cleanup.sh       # interactive, asks before deleting
+#   review-cleanup.sh -f    # delete all review branches immediately
 
 set -e
 
