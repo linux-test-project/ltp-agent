@@ -159,7 +159,8 @@ ALWAYS output in this EXACT format:
 - [LTP C test rules / LTP shell test rules / Open POSIX test rules]: ✅ all pass / ❌ <list violations>
 
 ### Issues Found
-1. <issue or "None">
+1. **<rule-id>** `<file>:<line>` — <issue description>
+   (or "None" if no issues)
 
 ### Verdict
 
