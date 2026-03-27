@@ -58,7 +58,7 @@ code), skip Phase 3 entirely. Only review commit messages (Phase 2) and verify
 that related entries (runtest, .gitignore, Makefile) are also removed.
 
 **Infrastructure-only patches:** If a patch only touches non-test files
-(runtest/*, Makefile, .gitignore, doc/, ci/, scripts/), skip the code review
+(runtest/\*, Makefile, .gitignore, doc/, ci/, scripts/), skip the code review
 checklist. Only review commit messages and verify the changes are correct.
 
 ## Phase 2: Commit Message Review
@@ -149,6 +149,9 @@ Key structural checks (verify these explicitly):
 - **C6 struct tst_test**: `grep "struct tst_test test" <file>`
 - **C7 .gitignore entry**: `grep <testname> <dir>/.gitignore`
 - **C8 runtest entry**: `grep <testname> runtest/*`
+- **C14 Unique test name**: For new tests, `grep -r <testname> runtest/`
+  must return only the entry added by this patch. Flag if the name collides
+  with an existing test.
 - **C13 Makefile**: If a new C test is added, verify the directory Makefile
   picks it up (either explicitly or via wildcard). Check `<dir>/Makefile`.
 - **C9 SAFE\_\* macros**: No raw syscalls that should use SAFE\_\*
