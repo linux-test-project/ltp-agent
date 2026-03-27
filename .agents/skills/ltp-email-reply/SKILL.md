@@ -25,15 +25,11 @@ branch IS master, **stop immediately** and tell the user:
 
 Do NOT proceed.
 
-### Step 1.2: Get the patch content and detect version
+### Step 1.2: Get the patch content
 
 ```bash
 git format-patch master..HEAD --stdout
 ```
-
-Parse the patch subject line for a version marker (e.g. `[PATCH v3 1/2]`).
-If found, record `N` (e.g. 3). If no version marker is present, assume `N=1`.
-Use `N+1` as the next version when asking the author to resend.
 
 ### Step 1.3: Get the review findings
 
