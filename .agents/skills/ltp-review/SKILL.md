@@ -134,7 +134,9 @@ Key structural checks (verify these explicitly):
 - **C1 SPDX header**: First line is `// SPDX-License-Identifier: GPL-2.0-or-later`
 - **C2 Copyright**: Second block has `Copyright`. For **new files** added by
   the patch, the year must be the current year.
-- **C3 Doc comment**: `/*\` block exists with description
+- **C3 Doc comment**: `/*\` block exists with description. The description
+  must actually match what the test does — flag if it looks copy-pasted from
+  another test or is a generic placeholder.
 - **C4 Uses tst_test.h**: `grep "tst_test.h" <file>`
 - **C5 No main()**: `grep "^int main\|^void main" <file>` returns empty
 - **C6 struct tst_test**: `grep "struct tst_test test" <file>`
@@ -163,7 +165,8 @@ Key structural checks (verify these explicitly):
 - **S2 SPDX header**: `# SPDX-License-Identifier: GPL-2.0-or-later`
 - **S3 Copyright**: Copyright line with year and author. For **new files**
   added by the patch, the year must be the current year.
-- **S4 Doc block**: `# --- doc` block present with RST description
+- **S4 Doc block**: `# --- doc` block present with RST description. Must
+  actually describe what the test does — flag if copy-pasted or generic.
 - **S5 Env block**: `# --- env` block present (even if empty `{}`)
 - **S6 Variable assignments before loader**: `TST_SETUP`/`TST_CLEANUP` set BEFORE `. tst_loader.sh`
 - **S7 Loader sourced**: `. tst_loader.sh` present, AFTER variables, BEFORE functions
