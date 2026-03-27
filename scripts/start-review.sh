@@ -141,7 +141,9 @@ log ""
 log "Running review with $AGENT ..."
 log ""
 
-PROMPT_VERBOSE="Run /ltp-review and show the results, then run /ltp-email-reply and show the results"
+PROMPT_VERBOSE="Run /ltp-review and show the full review output, \
+then run /ltp-email-reply and show the full email reply output. \
+Show both outputs completely."
 PROMPT_QUIET="Run /ltp-review, then run /ltp-email-reply and show only the email reply body"
 
 if [ "$VERBOSE" -eq 1 ]; then
