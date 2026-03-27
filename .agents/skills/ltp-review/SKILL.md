@@ -67,6 +67,10 @@ For EACH remaining commit (`git log master..HEAD`), review the message quality:
 - **M2 Body explains WHY**: Not just what, but the motivation for the change
 - **M3 One logical change**: Each commit is a single, self-contained change
 - **M4 Fixes tag**: If fixing a bug, `Fixes:` tag is present
+- **M5 Series ordering** (multi-commit only): Commits are in logical order
+  (e.g. helper/library changes before the test that uses them, cleanup
+  before new code that depends on it). Each intermediate commit must be
+  self-contained — no commit should reference code added by a later commit.
 
 CI already checks the mechanical parts (Signed-off-by presence, subject length).
 Your job is to judge whether the message is **clear and informative**.
