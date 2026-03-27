@@ -135,6 +135,8 @@ Key structural checks (verify these explicitly):
 - **C6 struct tst_test**: `grep "struct tst_test test" <file>`
 - **C7 .gitignore entry**: `grep <testname> <dir>/.gitignore`
 - **C8 runtest entry**: `grep <testname> runtest/*`
+- **C13 Makefile**: If a new C test is added, verify the directory Makefile
+  picks it up (either explicitly or via wildcard). Check `<dir>/Makefile`.
 - **C9 SAFE\_\* macros**: No raw syscalls that should use SAFE\_\*
 - **C10 Static vars reset**: Static vars in run() are reset or set in setup()
 - **C11 Result reporting**: Uses tst_res()/tst_brk() correctly
