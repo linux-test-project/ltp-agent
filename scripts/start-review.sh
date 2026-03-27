@@ -115,10 +115,11 @@ fi
 cd "$CLONE_DIR"
 
 # Symlink ltp-agent config into the clone
-ln -s "$SCRIPT_DIR/../.agents" .agents
-ln -s "$SCRIPT_DIR/../AGENTS.md" AGENTS.md
-ln -s "$SCRIPT_DIR/../agents" agents
-ln -s .agents .claude
+if [ "$VERBOSE" -eq 1 ]; then
+	"$SCRIPT_DIR/../setup.sh" "$CLONE_DIR" >&2
+else
+	"$SCRIPT_DIR/../setup.sh" "$CLONE_DIR" >/dev/null
+fi
 
 # ── Apply patch ──────────────────────────────────────────────────────────────
 log "Applying patch: $SOURCE"
@@ -141,9 +142,9 @@ log ""
 log "Running review with $AGENT ..."
 log ""
 
-PROMPT_VERBOSE="Run /ltp-review and show the full review output, \
-then run /ltp-email-reply and show the full email reply output. \
-Show both outputs completely."
+PROMPT_VERBOSE="Run /ltp-review and print the full review output \
+to the user. Then run /ltp-email-reply and print the full email \
+reply output to the user. You MUST print both outputs as text."
 PROMPT_QUIET="Run /ltp-review, then run /ltp-email-reply and show only the email reply body"
 
 if [ "$VERBOSE" -eq 1 ]; then
