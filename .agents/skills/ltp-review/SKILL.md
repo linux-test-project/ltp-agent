@@ -57,6 +57,10 @@ and the inline checklist conflict, `c-tests.md` wins.
 code), skip Phase 3 entirely. Only review commit messages (Phase 2) and verify
 that related entries (runtest, .gitignore, Makefile) are also removed.
 
+**Infrastructure-only patches:** If a patch only touches non-test files
+(runtest/*, Makefile, .gitignore, doc/, ci/, scripts/), skip the code review
+checklist. Only review commit messages and verify the changes are correct.
+
 ## Phase 2: Commit Message Review
 
 **Skip b4 cover letter commits.** Commits whose body contains
