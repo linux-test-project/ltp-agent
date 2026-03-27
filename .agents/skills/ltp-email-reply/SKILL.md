@@ -70,15 +70,13 @@ read its output and incorporate any runtime or build findings into the email.
   and close with a brief summary of what needs fixing.
 - If the verdict is **Needs discussion**, raise the open question clearly.
 
-### Structure
+### Structure (single patch or single-patch series)
 
 ```
 On <date>, <author> wrote:
 > <patch subject line>
 
 Hi <firstname>,
-
-[optional: one sentence of overall context or praise if warranted]
 
 > [relevant diff hunk or code line]
 
@@ -92,6 +90,31 @@ Hi <firstname>,
 
 [OR if Approved:]
 Reviewed-by: <git config user.name> <<git config user.email>>
+
+Regards,
+<git config user.name>
+```
+
+### Structure (multi-patch series)
+
+Generate a **separate email block** for each patch that has findings.
+Label each block with `--- Reply to [PATCH N/M] ---`. If a patch has no
+issues, skip it — do not generate an empty reply for it.
+
+If ALL patches are approved, generate a single reply to the cover letter
+(or patch 1 if no cover letter) with the Reviewed-by tag.
+
+```
+--- Reply to [PATCH N/M] ---
+
+On <date>, <author> wrote:
+> <patch subject line>
+
+Hi <firstname>,
+
+> [relevant diff hunk or code line]
+
+<comment>
 
 Regards,
 <git config user.name>
