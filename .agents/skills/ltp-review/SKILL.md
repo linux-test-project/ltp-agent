@@ -213,6 +213,10 @@ ALWAYS output in this EXACT format:
 **Approved** ✅ / **Needs revision** ❌ / **Needs discussion** ⚠️
 
 <one-line-reason>
+
+### Pre-existing (optional)
+1. `<file>:<line>` — <issue description>
+   (omit this section entirely if nothing was noticed)
 ```
 
 ## Decision Rules
@@ -220,5 +224,7 @@ ALWAYS output in this EXACT format:
 - ANY ground rule violation → **Needs revision** ❌
 - Missing runtest/gitignore (LTP tests only) → **Needs revision** ❌
 - Unclear or missing commit message body → **Needs revision** ❌
+- Missing Makefile entry for new C test → **Needs revision** ❌
+- Patch series in wrong order (M5) → **Needs revision** ❌
 - All checks pass → **Approved** ✅
 - Uncertain about rule → **Needs discussion** ⚠️
