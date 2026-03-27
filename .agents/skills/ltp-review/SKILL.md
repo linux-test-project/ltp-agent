@@ -50,6 +50,10 @@ LTP C test rules to Open POSIX tests.
 test rules. The checklist below is a structural guide only — when `c-tests.md`
 and the inline checklist conflict, `c-tests.md` wins.
 
+**Deletion-only patches:** If a patch only deletes files (no added or modified
+code), skip Phase 3 entirely. Only review commit messages (Phase 2) and verify
+that related entries (runtest, .gitignore, Makefile) are also removed.
+
 ## Phase 2: Commit Message Review
 
 **Skip b4 cover letter commits.** Commits whose body contains
