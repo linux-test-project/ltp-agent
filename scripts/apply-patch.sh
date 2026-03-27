@@ -96,7 +96,7 @@ case "$SOURCE" in
 	prepare_branch "review/tmp-apply"
 
 	if command -v b4 >/dev/null 2>&1; then
-		b4 shazam "$SOURCE"
+		b4 shazam -S "$SOURCE"
 	else
 		_msgid=$(echo "$SOURCE" | sed 's|.*/patch/||; s|/$||')
 		curl -sL "https://patchwork.ozlabs.org/patch/${_msgid}/mbox/" -o /tmp/ltp-patch.mbox
@@ -112,7 +112,7 @@ case "$SOURCE" in
 	prepare_branch "review/tmp-apply"
 
 	if command -v b4 >/dev/null 2>&1; then
-		b4 shazam "$SOURCE"
+		b4 shazam -S "$SOURCE"
 	else
 		_msgid=$(echo "$SOURCE" | sed 's|.*/r/||; s|/$||')
 		curl -sL "https://lore.kernel.org/ltp/${_msgid}/raw" -o /tmp/ltp-patch.mbox
