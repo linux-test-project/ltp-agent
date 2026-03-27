@@ -132,7 +132,8 @@ rules, and SAFE\_\* checks — those are API-independent.
 Key structural checks (verify these explicitly):
 
 - **C1 SPDX header**: First line is `// SPDX-License-Identifier: GPL-2.0-or-later`
-- **C2 Copyright**: Second block has `Copyright`
+- **C2 Copyright**: Second block has `Copyright`. For **new files** added by
+  the patch, the year must be the current year.
 - **C3 Doc comment**: `/*\` block exists with description
 - **C4 Uses tst_test.h**: `grep "tst_test.h" <file>`
 - **C5 No main()**: `grep "^int main\|^void main" <file>` returns empty
@@ -160,7 +161,8 @@ Key structural checks (verify these explicitly):
 
 - **S1 Shebang**: First line is exactly `#!/bin/sh`
 - **S2 SPDX header**: `# SPDX-License-Identifier: GPL-2.0-or-later`
-- **S3 Copyright**: Copyright line with year and author
+- **S3 Copyright**: Copyright line with year and author. For **new files**
+  added by the patch, the year must be the current year.
 - **S4 Doc block**: `# --- doc` block present with RST description
 - **S5 Env block**: `# --- env` block present (even if empty `{}`)
 - **S6 Variable assignments before loader**: `TST_SETUP`/`TST_CLEANUP` set BEFORE `. tst_loader.sh`
