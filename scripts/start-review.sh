@@ -7,12 +7,14 @@
 # By default only the email reply body is printed to stdout.
 #
 # Usage:
-#   start-review.sh [-d <dir>] [-c] [-v] [-a claude|opencode] <source>
+#   start-review.sh [-d <dir>] [-c] [-v] [-i] [-a claude|opencode] <source>
 #
 # Options:
 #   -d <dir>           Clone into <dir> instead of /tmp/ltp-<id>
 #   -c                 Clean up (delete) the clone when finished
 #   -v                 Verbose: show all output (clone, apply, review, email reply)
+#   -i                 Interactive: open agent in the clone dir after review
+#                      (allows claude --resume to work later)
 #   -a claude|opencode Choose the AI agent (default: auto-detect)
 #
 # The <source> argument is anything accepted by apply-patch.sh:
@@ -35,6 +37,7 @@ LTP_UPSTREAM="git@github.com:linux-test-project/ltp.git"
 CLONE_DIR=""
 CLEANUP=0
 VERBOSE=0
+INTERACTIVE=0
 AGENT=""
 
 die() {
@@ -54,14 +57,15 @@ log() {
 	fi
 }
 
-while getopts "d:cva:h" opt; do
+while getopts "d:cvia:h" opt; do
 	case "$opt" in
-		d) CLONE_DIR="$OPTARG" ;;
-		c) CLEANUP=1 ;;
-		v) VERBOSE=1 ;;
-		a) AGENT="$OPTARG" ;;
-		h) usage ;;
-		*) usage ;;
+	d) CLONE_DIR="$OPTARG" ;;
+	c) CLEANUP=1 ;;
+	v) VERBOSE=1 ;;
+	i) INTERACTIVE=1 ;;
+	a) AGENT="$OPTARG" ;;
+	h) usage ;;
+	*) usage ;;
 	esac
 done
 shift $((OPTIND - 1))
@@ -84,15 +88,15 @@ if [ -z "$AGENT" ]; then
 fi
 
 case "$AGENT" in
-	claude)
-		command -v claude >/dev/null 2>&1 || die "claude CLI is required"
-		;;
-	opencode)
-		command -v opencode >/dev/null 2>&1 || die "opencode CLI is required"
-		;;
-	*)
-		die "unsupported agent: $AGENT (use 'claude' or 'opencode')"
-		;;
+claude)
+	command -v claude >/dev/null 2>&1 || die "claude CLI is required"
+	;;
+opencode)
+	command -v opencode >/dev/null 2>&1 || die "opencode CLI is required"
+	;;
+*)
+	die "unsupported agent: $AGENT (use 'claude' or 'opencode')"
+	;;
 esac
 
 if [ -z "$CLONE_DIR" ]; then
@@ -154,22 +158,28 @@ else
 fi
 
 case "$AGENT" in
-	claude)
-		if [ "$VERBOSE" -eq 1 ]; then
-			claude -p "$PROMPT" \
-				--allowedTools "Bash(git:*)" "Bash(grep:*)" "Read"
-		else
-			claude -p "$PROMPT" \
-				--allowedTools "Bash(git:*)" "Bash(grep:*)" "Read" 2>/dev/null
-		fi
-		;;
-	opencode)
-		# opencode permissions are set in ~/.config/opencode/opencode.json;
-		# bash and read must be allowed for non-interactive use.
-		if [ "$VERBOSE" -eq 1 ]; then
-			opencode run "$PROMPT"
-		else
-			opencode run "$PROMPT" 2>/dev/null
-		fi
-		;;
+claude)
+	if [ "$INTERACTIVE" -eq 1 ]; then
+		claude "$PROMPT" \
+			--allowedTools "Bash(git:*)" \
+			"Bash(grep:*)" "Read"
+	elif [ "$VERBOSE" -eq 1 ]; then
+		claude -p "$PROMPT" \
+			--allowedTools "Bash(git:*)" \
+			"Bash(grep:*)" "Read"
+	else
+		claude -p "$PROMPT" \
+			--allowedTools "Bash(git:*)" \
+			"Bash(grep:*)" "Read" 2>/dev/null
+	fi
+	;;
+opencode)
+	if [ "$INTERACTIVE" -eq 1 ]; then
+		opencode "$PROMPT"
+	elif [ "$VERBOSE" -eq 1 ]; then
+		opencode run "$PROMPT"
+	else
+		opencode run "$PROMPT" 2>/dev/null
+	fi
+	;;
 esac
