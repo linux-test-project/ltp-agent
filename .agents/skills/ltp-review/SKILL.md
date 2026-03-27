@@ -69,18 +69,44 @@ Your job is to judge whether the message is **clear and informative**.
 
 ## Phase 3: Code Review
 
-Read the full changed files (not just the diff) and check EACH rule.
-Mark ✅, ❌, or N/A.
+### Scope
+
+Read full changed files for context, but only flag issues that meet one of:
+
+1. Code added or modified by the patch
+2. Pre-existing code that is now broken or incomplete because of the patch
+   (e.g. patch adds a fd in setup() but existing cleanup() never closes it)
+3. Pre-existing code on a path directly exercised by the patch's new logic
+
+Do NOT flag pre-existing style issues or old API usage as review failures.
+
+If you notice pre-existing issues unrelated to the patch, list them separately
+under a **### Pre-existing (optional)** section after the main review. These
+are informational only and do NOT affect the verdict.
+
+### Checklist
+
+Check EACH rule below. Mark ✅, ❌, or N/A.
 
 ### Ground Rules (MANDATORY - any ❌ = reject)
 
-- **G1 No kernel bug workarounds**: Read code for workaround comments
-- **G2 No sleep-based sync**: `grep -n "sleep\|nanosleep" <file>`
+- **G1 No kernel bug workarounds**:
+  `grep -n -i "workaround\|work-around\|hack for\|broken kernel" <file>`.
+  Flag if code explicitly mentions working around a kernel bug.
+- **G2 No sleep-based sync**:
+  `grep -n "sleep\|usleep\|nanosleep" <file>`.
+  Flag any match used for synchronization. Tests that sleep as part of
+  testing timer APIs are exempt.
 - **G3 Runtime feature detection**: Check for runtime checks, not just `#ifdef`
-- **G4 Root only if needed**: Check `.needs_root` matches actual need (LTP)
-  or test documents privilege requirements (Open POSIX)
-- **G5 Cleanup on all paths**: Check cleanup() handles all resources (LTP)
-  or manual cleanup before all returns (Open POSIX)
+- **G4 Root only if needed**:
+  Flag if `.needs_root = 1` but no privileged operation (raw socket, mount,
+  chown to other uid, writing `/proc`|`/sys`, CAP\_\*) exists. Flag if
+  privileged operation exists but `.needs_root` is missing.
+- **G5 Cleanup on all paths**:
+  For each resource opened in setup()/run(), verify matching release in cleanup():
+  `SAFE_OPEN` → `SAFE_CLOSE`, `SAFE_MMAP` → `SAFE_MUNMAP`,
+  `SAFE_MALLOC`/`malloc` → `free`, `SAFE_MOUNT` → `SAFE_UMOUNT`,
+  `SAFE_FORK`/`fork` → child calls `exit()`.
 - **G6 Portable code**: Uses POSIX-only APIs (Open POSIX) or portable constructs (LTP)
 - **G7 One change per patch**: Review diff scope
 - **G8 Staging for unreleased**: Check if kernel feature is released
