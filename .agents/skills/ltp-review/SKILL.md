@@ -39,7 +39,10 @@ Use `git diff --name-only master..HEAD` to list changed files, then load
 corresponding rules:
 
 - Files in `testcases/open_posix_testsuite/` → Read `agents/openposix.md`
-- `*.c` or `*.h` (NOT in open_posix_testsuite) → Read `agents/c-tests.md`
+- `*.c` or `*.h` under `testcases/` (NOT in open_posix_testsuite) → Read `agents/c-tests.md`
+- `*.c` or `*.h` under `lib/` or `include/` → These are **library/header
+  files**, NOT tests. Do NOT apply C test rules (C1–C13). Only review for
+  correctness, ground rules, and coding style.
 - `*.sh` → Read `agents/shell-tests.md`
 - Mixed → Read all applicable files
 
