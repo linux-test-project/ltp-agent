@@ -159,6 +159,11 @@ WRONG/CORRECT reference.
 Apply ALL rules from `agents/shell-tests.md` (already loaded in Step 1.3).
 Do not rely on memory or prior knowledge — use the live file content.
 
+**Old API tests:** If a changed shell file uses the old API (`. test.sh`,
+`tst_resm`, `TCID`, `TST_TOTAL`) and the patch is NOT converting it to the
+new API, skip checks S1–S9 (they apply only to new-API tests). Still apply
+S10–S12 and ground rules.
+
 Key structural checks (verify these explicitly):
 
 - **S1 Shebang**: First line is exactly `#!/bin/sh`
