@@ -30,20 +30,15 @@ and run them.
    cd ltp
    ```
 
-2. Clone this repository and symlink the agent configuration into the LTP tree:
+2. Clone this repository and run the setup script:
 
    ```sh
    git clone <this-repo-url> ltp-agent
-   ln -s ltp-agent/.agents .agents
-   ln -s ltp-agent/AGENTS.md .
-   ln -s ltp-agent/agents .
+   ./ltp-agent/setup.sh
    ```
 
-   Claude Code requires a `.claude` directory. Add a symlink for it:
-
-   ```sh
-   ln -s .agents .claude
-   ```
+   This symlinks the agent configuration (`.agents`, `.claude`, `AGENTS.md`,
+   `agents`) into the LTP tree.
 
 3. Build LTP once so that tests can be compiled:
 
