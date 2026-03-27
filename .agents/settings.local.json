@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:googlegemini.dev)",
+      "WebFetch(domain:docs.cloud.google.com)",
+      "WebSearch"
+    ]
+  }
+}

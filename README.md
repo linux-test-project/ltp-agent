@@ -14,6 +14,7 @@ and run them.
 
 - An AI coding agent that supports `AGENTS.md` and skill files (e.g.
   [Claude Code](https://claude.com/claude-code),
+  [Gemini CLI](https://github.com/google-gemini/gemini-cli),
   [OpenCode](https://opencode.ai))
 - An LTP git checkout
 - Build dependencies for LTP: `git`, `gcc`, `make`, `autoconf`, `automake`,
@@ -37,8 +38,8 @@ and run them.
    ./ltp-agent/setup.sh
    ```
 
-   This symlinks the agent configuration (`.agents`, `.claude`, `AGENTS.md`,
-   `agents`) into the LTP tree.
+   This symlinks the agent configuration (`.agents`, `.claude`, `GEMINI.md`,
+   `AGENTS.md`, `agents`) into the LTP tree.
 
 3. Build LTP once so that tests can be compiled:
 

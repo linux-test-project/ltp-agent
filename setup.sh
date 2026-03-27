@@ -47,13 +47,21 @@ for name in .agents AGENTS.md agents; do
 	ln -s "$target" "$link"
 done
 
-# .claude -> .agents
-link="$LTP_DIR/.claude"
-if [ -L "$link" ]; then
-	rm "$link"
-elif [ -e "$link" ]; then
-	die "$link already exists and is not a symlink"
-fi
-ln -s .agents "$link"
+# Agent-specific symlinks
+# .claude -> .agents   (Claude Code)
+# GEMINI.md -> AGENTS.md (Gemini CLI)
+for link_pair in ".claude .agents" "GEMINI.md AGENTS.md"; do
+	set -- $link_pair
+	link="$LTP_DIR/$1"
+	target="$2"
+
+	if [ -L "$link" ]; then
+		rm "$link"
+	elif [ -e "$link" ]; then
+		die "$link already exists and is not a symlink"
+	fi
+
+	ln -s "$target" "$link"
+done
 
 echo "ltp-agent linked into $LTP_DIR"
