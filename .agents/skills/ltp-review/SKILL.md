@@ -116,6 +116,11 @@ Check EACH rule below. Mark ✅, ❌, or N/A.
 Apply ALL rules from `agents/c-tests.md` (already loaded in Step 1.3).
 Do not rely on memory or prior knowledge — use the live file content.
 
+**Old API tests:** If a changed C file uses the old API (`#include "test.h"`,
+`TCID`, `tst_resm`) and the patch is NOT converting it to the new API, skip
+checks C1–C6 (they apply only to new-API tests). Still apply C7–C12, ground
+rules, and SAFE\_\* checks — those are API-independent.
+
 Key structural checks (verify these explicitly):
 
 - **C1 SPDX header**: First line is `// SPDX-License-Identifier: GPL-2.0-or-later`
