@@ -46,6 +46,9 @@ When reviewing or writing C tests, verify ALL of the following:
 - Code MUST follow Linux kernel coding style
 - `make check` or `make check-$TCID` MUST pass (uses vendored `checkpatch.pl`)
 - MUST use C99 features where appropriate
+- Variables declared after statements (C99/C11 style) are allowed. Declaring
+  at the top of the block is preferred but NOT mandatory — do NOT flag
+  mixed declarations as errors
 
 ### 2. API Usage
 
