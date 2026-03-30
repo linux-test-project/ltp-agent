@@ -41,7 +41,7 @@ corresponding rules:
 - Files in `testcases/open_posix_testsuite/` → Read `agents/openposix.md`
 - `*.c` or `*.h` under `testcases/` (NOT in open_posix_testsuite) → Read `agents/c-tests.md`
 - `*.c` or `*.h` under `lib/` or `include/` → These are **library/header
-  files**, NOT tests. Do NOT apply C test rules (C1–C13). Only review for
+  files**, NOT tests. Do NOT apply C test rules (C1–C14). Only review for
   correctness, ground rules, and coding style.
 - `*.sh` → Read `agents/shell-tests.md`
 - Mixed → Read all applicable files
@@ -70,19 +70,39 @@ do NOT ask to squash them.
 
 For EACH remaining commit (`git log master..HEAD`), review the message quality:
 
-- **M1 Subject is clear**: Describes WHAT changed concisely
-- **M2 Body explains WHY**: Not just what, but the motivation for the change
-- **M3 One logical change**: Each commit is a single, self-contained change
+- **M1 Subject is clear**: Describes WHAT changed concisely. Flag if the
+  subject is generic (e.g. "fix test", "update code") without naming the
+  affected component or behavior. A good subject lets a reader predict the
+  diff scope without opening it.
+- **M2 Body explains WHY**: The body must contain at least one sentence
+  beyond restating the subject line. It must state the motivation (why the
+  change is needed) or the problem being solved. Flag if the body only
+  describes what changed (e.g. "changed X to Y") without explaining why,
+  or if the body is empty. Exception: trivial mechanical changes (typo
+  fixes, whitespace) may have a minimal body.
+- **M3 One logical change**: Each commit is a single, self-contained change.
+  Each patch MUST compile on its own and MUST NOT introduce intermediate
+  breakage. Flag patches that mix unrelated changes (e.g. a bugfix bundled
+  with a rename, or a new test bundled with cleanup of an old one).
 - **M4 Fixes tag**: If fixing a bug, `Fixes:` tag is present
 - **M5 Series ordering** (multi-commit only): Commits are in logical order
   (e.g. helper/library changes before the test that uses them, cleanup
   before new code that depends on it). Each intermediate commit must be
   self-contained — no commit should reference code added by a later commit.
+  For each commit N, verify it does not call functions or use variables
+  introduced by commit N+1 or later.
 
 CI already checks the mechanical parts (Signed-off-by presence, subject length).
 Your job is to judge whether the message is **clear and informative**.
 
 ## Phase 3: Code Review
+
+### Step 3.1: Read the Diff
+
+For each commit in the series, run `git show <hash>` to read the individual
+diff. Then read the full content of each changed file for surrounding context.
+Use `git diff master..HEAD` for the combined diff when checking cross-commit
+consistency.
 
 ### Scope
 
@@ -112,28 +132,59 @@ Check EACH rule below. Mark ✅, ❌, or N/A.
   `grep -n "sleep\|usleep\|nanosleep" <file>`.
   Flag any match used for synchronization. Tests that sleep as part of
   testing timer APIs are exempt.
-- **G3 Runtime feature detection**: Check for runtime checks, not just `#ifdef`
+- **G3 Runtime feature detection**:
+  For each `#ifdef` or `#if defined` in the patch, evaluate whether it is
+  a fallback API definition in `include/lapi/` (allowed), a file-level
+  `#ifdef HAVE_*` guard with `TST_TEST_TCONF` in the `#else` branch
+  (allowed — see C rule §14), or a feature gate that should use runtime
+  detection instead (flag). Acceptable runtime alternatives: errno checks
+  (`ENOSYS`/`EINVAL`), `.min_kver`, `.needs_kconfigs`, or kernel `.config`
+  parsing.
 - **G4 Root only if needed**:
-  Flag if `.needs_root = 1` but no privileged operation (raw socket, mount,
-  chown to other uid, writing `/proc`|`/sys`, CAP\_\*) exists. Flag if
-  privileged operation exists but `.needs_root` is missing.
+  Read the test code and identify whether any operation requires root
+  privileges (e.g. mount/umount, chown/chroot, raw sockets, writing to
+  `/proc` or `/sys`, setting capabilities, changing uid/gid, creating
+  device nodes, modifying rlimits, binding to privileged ports, loading
+  kernel modules, configuring network interfaces, accessing other users'
+  files, etc. — this list is not exhaustive). Flag if `.needs_root = 1`
+  but no privileged operation is found. Flag if a privileged operation
+  exists but `.needs_root` is missing.
 - **G5 Cleanup on all paths**:
   For each resource opened in setup()/run(), verify matching release in cleanup():
   `SAFE_OPEN` → `SAFE_CLOSE`, `SAFE_MMAP` → `SAFE_MUNMAP`,
   `SAFE_MALLOC`/`malloc` → `free`, `SAFE_MOUNT` → `SAFE_UMOUNT`,
   `SAFE_FORK`/`fork` → child calls `exit()`.
-- **G6 Portable code**: Uses POSIX-only APIs (Open POSIX) or portable constructs (LTP)
-- **G7 One change per patch**: Review diff scope
-- **G8 Staging for unreleased**: Check if kernel feature is released
+- **G6 Portable code**:
+  Read the patch and flag any nonstandard libc or GNU extension APIs when
+  a portable POSIX equivalent exists. Flag assumptions about 64-bit, page
+  size, or endianness without runtime checks. For arch-specific tests,
+  verify `.supported_archs` is used (see C rule §13). For shell tests:
+  CI runs `checkbashisms`, but verify no `[[ ]]`, arrays, `function`
+  keyword, or process substitution are present.
+- **G7 Staging for unreleased**:
+  If the test targets a specific kernel version, fetch
+  `https://www.kernel.org` and compare the latest stable release against
+  the test's target version. If the feature is not in a released kernel,
+  verify the commit subject uses `[STAGING]` prefix and the runtest entry
+  is in `runtest/staging`. If the feature IS released, flag any `[STAGING]`
+  prefix or `runtest/staging` entry as incorrect.
 
 ### LTP C Test Rules
 
 Apply ALL rules from `agents/c-tests.md` (already loaded in Step 1.3).
 Do not rely on memory or prior knowledge — use the live file content.
 
+**Rule ID mapping** (SKILL.md ID → `c-tests.md` section):
+C1–C3 → §1 Coding Style + §Required Test Structure (SPDX, copyright, doc comment);
+C4–C6 → §2 API Usage; C7–C8 → §4 File Organization; C9 → §6 Safe Macros;
+C10 → §10 Static Variables; C11 → §5 Result Reporting; C12 → §5 Result Reporting
+(TCONF); C13 → §4 File Organization (Makefile); C14 → §4 File Organization
+(unique name). All code-example sections in `c-tests.md` (§Code Examples) are
+authoritative WRONG/CORRECT references — apply them as-is.
+
 **Old API tests:** If a changed C file uses the old API (`#include "test.h"`,
 `TCID`, `tst_resm`) and the patch is NOT converting it to the new API, skip
-checks C1–C6 (they apply only to new-API tests). Still apply C7–C12, ground
+checks C1–C6 (they apply only to new-API tests). Still apply C7–C14, ground
 rules, and SAFE\_\* checks — those are API-independent.
 
 Key structural checks (verify these explicitly):
@@ -149,12 +200,21 @@ Key structural checks (verify these explicitly):
 - **C6 struct tst_test**: `grep "struct tst_test test" <file>`
 - **C7 .gitignore entry**: `grep <testname> <dir>/.gitignore`
 - **C8 runtest entry**: `grep <testname> runtest/*`
-- **C9 SAFE\_\* macros**: No raw syscalls that should use SAFE\_\*
-- **C10 Static vars reset**: Static vars in run() are reset or set in setup()
+- **C9 SAFE\_\* macros**: For each syscall or libc call in the patch, check
+  whether a `SAFE_*` version exists in `include/tst_*.h`. If it exists,
+  flag the raw call. Calls inside `TEST()` or `TST_EXP_*` macros are
+  exempt (they intentionally test the raw return).
+- **C10 Static vars reset**: For each static variable modified during
+  `run()`, verify it is re-initialized at the start of `run()` or set in
+  `setup()`. This ensures correctness when the test is invoked with `-i`
+  (iteration). Variables that are only read in `run()` (set once in
+  `setup()`) are exempt.
 - **C11 Result reporting**: Uses tst_res()/tst_brk() correctly
 - **C12 TCONF for unsupported**: Feature unavailable → TCONF, not TFAIL
-- **C13 Makefile**: If a new C test is added, verify the directory Makefile
-  picks it up (either explicitly or via wildcard). Check `<dir>/Makefile`.
+- **C13 Makefile**: If a new C test is added, read `<dir>/Makefile`. If it
+  uses a wildcard (e.g. no explicit file list), the new test is picked up
+  automatically — mark ✅. If it lists targets explicitly, verify the new
+  test binary name appears in the list. Flag if missing.
 - **C14 Unique test name**: For new tests, `grep -r <testname> runtest/`
   must return only the entry added by this patch. Flag if the name collides
   with an existing test.
@@ -168,6 +228,15 @@ WRONG/CORRECT reference.
 
 Apply ALL rules from `agents/shell-tests.md` (already loaded in Step 1.3).
 Do not rely on memory or prior knowledge — use the live file content.
+
+**Rule ID mapping** (SKILL.md ID → `shell-tests.md` section):
+S1 → §Block 1 (shebang); S2 → §Block 1 (SPDX); S3 → §Block 1 (copyright);
+S4 → §Block 2 (doc block); S5 → §Block 3 (env block);
+S6 → §Block 4 (variable assignments before loader);
+S7 → §Block 5 (source loader); S8 → §Block 6 (functions after loader);
+S9 → §Block 8 (runner last); S10 → §Coding Style Checklist (POSIX shell);
+S11 → §Coding Style Checklist (quoted expansions);
+S12 → §Block 7 (result reporting).
 
 **Old API tests:** If a changed shell file uses the old API (`. test.sh`,
 `tst_resm`, `TCID`, `TST_TOTAL`) and the patch is NOT converting it to the
@@ -236,10 +305,10 @@ ALWAYS output in this EXACT format:
 
 ## Decision Rules
 
-- ANY ground rule violation → **Needs revision** ❌
-- Missing runtest/gitignore (LTP tests only) → **Needs revision** ❌
-- Unclear or missing commit message body → **Needs revision** ❌
-- Missing Makefile entry for new C test → **Needs revision** ❌
-- Patch series in wrong order (M5) → **Needs revision** ❌
+- ANY ground rule violation (G1–G7) → **Needs revision** ❌
+- ANY commit message violation (M1–M5) → **Needs revision** ❌
+- ANY C test rule violation (C1–C14) → **Needs revision** ❌
+- ANY shell test rule violation (S1–S12) → **Needs revision** ❌
+- ANY Open POSIX rule violation (P1–P11) → **Needs revision** ❌
 - All checks pass → **Approved** ✅
 - Uncertain about rule → **Needs discussion** ⚠️
