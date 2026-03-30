@@ -41,7 +41,7 @@ corresponding rules:
 - Files in `testcases/open_posix_testsuite/` → Read `agents/openposix.md`
 - `*.c` or `*.h` under `testcases/` (NOT in open_posix_testsuite) → Read `agents/c-tests.md`
 - `*.c` or `*.h` under `lib/` or `include/` → These are **library/header
-  files**, NOT tests. Do NOT apply C test rules (C1–C14). Only review for
+  files**, NOT tests. Do NOT apply C test rules (C1–C15). Only review for
   correctness, ground rules, and coding style.
 - `*.sh` → Read `agents/shell-tests.md`
 - Mixed → Read all applicable files
@@ -179,12 +179,13 @@ C1–C3 → §1 Coding Style + §Required Test Structure (SPDX, copyright, doc c
 C4–C6 → §2 API Usage; C7–C8 → §4 File Organization; C9 → §6 Safe Macros;
 C10 → §10 Static Variables; C11 → §5 Result Reporting; C12 → §5 Result Reporting
 (TCONF); C13 → §4 File Organization (Makefile); C14 → §4 File Organization
-(unique name). All code-example sections in `c-tests.md` (§Code Examples) are
+(unique name); C15 → §3 Syscall Usage. All code-example sections in
+`c-tests.md` (§Code Examples) are
 authoritative WRONG/CORRECT references — apply them as-is.
 
 **Old API tests:** If a changed C file uses the old API (`#include "test.h"`,
 `TCID`, `tst_resm`) and the patch is NOT converting it to the new API, skip
-checks C1–C6 (they apply only to new-API tests). Still apply C7–C14, ground
+checks C1–C6 (they apply only to new-API tests). Still apply C7–C15, ground
 rules, and SAFE\_\* checks — those are API-independent.
 
 Key structural checks (verify these explicitly):
@@ -218,6 +219,18 @@ Key structural checks (verify these explicitly):
 - **C14 Unique test name**: For new tests, `grep -r <testname> runtest/`
   must return only the entry added by this patch. Flag if the name collides
   with an existing test.
+- **C15 Syscall correctness**: Verify that the test's usage of the syscall
+  under test (arguments, return values, error codes, side effects) matches
+  the documented and actual kernel behavior. To cross-check, try the
+  following sources in order of preference:
+  - Man pages (`man 2 <syscall>` or online)
+  - Local kernel source tree at `/usr/src/linux` (if available)
+  - Online kernel source: `https://github.com/torvalds/linux` or
+    `https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/`
+
+  If none of these sources are accessible or the behavior cannot be
+  confirmed, flag the syscall usage as **Needs discussion** ⚠️ rather
+  than approving or rejecting it.
 
 For code patterns (string handling, memory allocation, fd init, PATH_MAX,
 parametrization, child processes, etc.) apply the examples from
@@ -307,7 +320,7 @@ ALWAYS output in this EXACT format:
 
 - ANY ground rule violation (G1–G7) → **Needs revision** ❌
 - ANY commit message violation (M1–M5) → **Needs revision** ❌
-- ANY C test rule violation (C1–C14) → **Needs revision** ❌
+- ANY C test rule violation (C1–C15) → **Needs revision** ❌
 - ANY shell test rule violation (S1–S12) → **Needs revision** ❌
 - ANY Open POSIX rule violation (P1–P11) → **Needs revision** ❌
 - All checks pass → **Approved** ✅
