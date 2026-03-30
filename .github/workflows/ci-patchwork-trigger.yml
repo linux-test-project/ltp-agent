@@ -1,0 +1,93 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (c) 2026 Andrea Cervesato <andrea.cervesato@suse.com>
+#
+# Poll Patchwork for new LTP patch series and dispatch a review
+# workflow for each one that has not been reviewed yet.
+
+name: "Patchwork review trigger"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+env:
+  PATCHWORK_URL: https://patchwork.ozlabs.org
+  # Look back 1 hour to account for schedule drift
+  PATCHWORK_SINCE: 3600
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch new series from Patchwork
+        id: fetch
+        run: |
+          current_time=$(date +%s)
+          since_time=$((current_time - PATCHWORK_SINCE))
+          date_param=$(date -u -d @$since_time +"%Y-%m-%dT%H:%M:%SZ")
+
+          response=$(curl -sfk -G "$PATCHWORK_URL/api/events/" \
+            --data "category=series-completed" \
+            --data "project=ltp" \
+            --data "state=new" \
+            --data "since=$date_param" \
+            --data "archive=no")
+
+          echo "$response" | jq -r '.[] | "\(.payload.series.id)|\(.payload.series.mbox)"' > series.txt
+          cat series.txt
+
+      - name: Filter already-reviewed series
+        id: filter
+        run: |
+          touch dispatch.txt
+
+          while IFS='|' read -r series_id series_mbox; do
+            [ -z "$series_id" ] && continue
+
+            # Check if any patch in the series already has a check result
+            patches=$(curl -sfk -G "$PATCHWORK_URL/api/patches/" \
+              --data "project=ltp" \
+              --data "series=$series_id" | jq -r '.[].id')
+
+            reviewed=false
+            for patch_id in $patches; do
+              checks=$(curl -sfk "$PATCHWORK_URL/api/patches/$patch_id/checks/" | jq -r '.[].id')
+              if [ -n "$checks" ]; then
+                reviewed=true
+                break
+              fi
+            done
+
+            if [ "$reviewed" = false ]; then
+              echo "$series_id|$series_mbox" >> dispatch.txt
+            fi
+          done < series.txt
+
+          echo "count=$(wc -l < dispatch.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          cat dispatch.txt
+
+      - name: Dispatch review workflows
+        if: steps.filter.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const lines = fs.readFileSync('dispatch.txt', 'utf8').trim().split('\n');
+
+            for (const line of lines) {
+              if (!line) continue;
+              const [series_id, series_mbox] = line.split('|');
+
+              console.log(`Dispatching review for series ${series_id}`);
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.ref,
+                workflow_id: 'ci-copilot-review.yml',
+                inputs: {
+                  SERIES_ID: series_id,
+                  SERIES_MBOX: series_mbox,
+                }
+              });
+            }

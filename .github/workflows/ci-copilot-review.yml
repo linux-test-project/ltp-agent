@@ -1,0 +1,112 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (c) 2026 Andrea Cervesato <andrea.cervesato@suse.com>
+#
+# Review an LTP patch series using GitHub Copilot CLI.
+# Triggered by ci-patchwork-trigger.yml or manually.
+
+name: "Copilot patch review"
+
+on:
+  workflow_dispatch:
+    inputs:
+      SERIES_ID:
+        description: Patchwork series ID
+        required: true
+      SERIES_MBOX:
+        description: Patchwork series mbox URL
+        required: true
+      VERBOSE:
+        description: Show full Copilot output in the step log
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  LTP_UPSTREAM: https://github.com/linux-test-project/ltp.git
+  AGENT_DIR: ${{ github.workspace }}/ltp-agent
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ltp-agent
+        uses: actions/checkout@v5
+        with:
+          path: ltp-agent
+
+      - name: Clone LTP
+        run: git clone --depth 1 "$LTP_UPSTREAM" ltp
+
+      - name: Link ltp-agent into LTP
+        run: $AGENT_DIR/setup.sh ${{ github.workspace }}/ltp
+
+      - name: Install kernel source and man pages
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -yqq man-db manpages-dev manpages-posix-dev
+          sudo git clone --depth 1 https://github.com/torvalds/linux /usr/src/linux
+
+      - name: Apply patch series
+        working-directory: ltp
+        run: |
+          git config user.name "LTP CI"
+          git config user.email "ltp-ci@noreply.github.com"
+          git checkout -b "review/series-${{ inputs.SERIES_ID }}" master
+          curl -sfkL "${{ inputs.SERIES_MBOX }}" -o /tmp/series.mbox
+          git am /tmp/series.mbox
+          rm -f /tmp/series.mbox
+
+          echo "### Patch Series" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Series ID:** ${{ inputs.SERIES_ID }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Branch:** $(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commits:** $(git rev-list --count master..HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fetch latest stable kernel version
+        id: kver
+        run: |
+          latest=$(curl -sf https://www.kernel.org/ | \
+            grep -oP 'strong>\K[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1)
+          echo "version=${latest}" >> "$GITHUB_OUTPUT"
+          echo "Latest stable kernel: ${latest}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Run review
+        working-directory: ltp
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+          LATEST_KERNEL: ${{ steps.kver.outputs.version }}
+        run: |
+          set -o pipefail
+
+          SILENT_FLAG=""
+          if [ "${{ inputs.VERBOSE }}" != "true" ]; then
+            SILENT_FLAG="-s"
+          fi
+
+          copilot -p "The latest stable kernel release is ${LATEST_KERNEL}. Use this for G7 staging checks instead of fetching kernel.org. Run /ltp-review and print the full review output. Then run /ltp-email-reply and print the full email reply output." \
+            --allow-tool='shell(git log:*)' \
+            --allow-tool='shell(git show:*)' \
+            --allow-tool='shell(git diff:*)' \
+            --allow-tool='shell(git rev-list:*)' \
+            --allow-tool='shell(git rev-parse:*)' \
+            --allow-tool='shell(git format-patch:*)' \
+            --allow-tool='shell(man:*)' \
+            --allow-tool='read(${{ github.workspace }}/ltp/*)' \
+            --allow-tool='read(${{ github.workspace }}/ltp-agent/*)' \
+            --allow-tool='read(/usr/src/linux/*)' \
+            --no-ask-user \
+            $SILENT_FLAG \
+            | tee /tmp/review-output.txt
+
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/review-output.txt >> "$GITHUB_STEP_SUMMARY"
