@@ -80,6 +80,7 @@ jobs:
         run: npm install -g @github/copilot
 
       - name: Run review
+        id: review
         working-directory: ltp
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
@@ -107,6 +108,59 @@ jobs:
             $SILENT_FLAG \
             | tee /tmp/review-output.txt
 
+          # Extract verdict for Patchwork check
+          if grep -qi "Approved" /tmp/review-output.txt; then
+            echo "verdict=success" >> "$GITHUB_OUTPUT"
+            echo "description=Approved" >> "$GITHUB_OUTPUT"
+          else
+            echo "verdict=warning" >> "$GITHUB_OUTPUT"
+            if grep -qi "Needs discussion" /tmp/review-output.txt; then
+              echo "description=Needs discussion" >> "$GITHUB_OUTPUT"
+            else
+              echo "description=Needs revision" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
           echo "---" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/review-output.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post results to Patchwork
+        if: always()
+        env:
+          PATCHWORK_URL: https://patchwork.ozlabs.org
+          PATCHWORK_TOKEN: ${{ secrets.PATCHWORK_TOKEN }}
+        run: |
+          if [ -z "$PATCHWORK_TOKEN" ]; then
+            echo "PATCHWORK_TOKEN not set, skipping Patchwork update"
+            exit 0
+          fi
+
+          series_id="${{ inputs.SERIES_ID }}"
+          target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          context="copilot-review"
+
+          # Use review verdict if available, otherwise mark as pending
+          state="${{ steps.review.outputs.verdict }}"
+          description="${{ steps.review.outputs.description }}"
+          if [ -z "$state" ]; then
+            state="pending"
+            description="Review did not complete"
+          fi
+
+          patches=$(curl -sfk -G "$PATCHWORK_URL/api/patches/" \
+            --data "project=ltp" \
+            --data "series=$series_id" | jq -r '.[].id')
+
+          for patch_id in $patches; do
+            [ -z "$patch_id" ] && continue
+
+            echo "Posting check for patch $patch_id: state=$state"
+            curl -sfk -X POST \
+              -H "Authorization: Token $PATCHWORK_TOKEN" \
+              -F "state=$state" \
+              -F "context=$context" \
+              -F "target_url=$target_url" \
+              -F "description=$description" \
+              "$PATCHWORK_URL/api/patches/$patch_id/checks/"
+          done
