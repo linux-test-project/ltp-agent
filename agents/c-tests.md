@@ -461,8 +461,11 @@ static struct tst_test test = {
 
 #### No manual reset after SAFE_CLOSE
 
-`SAFE_CLOSE()` already resets the file descriptor to `-1` after closing.
-NEVER manually reset it afterwards:
+`SAFE_CLOSE()` is a macro that calls `safe_close()` AND sets the variable
+to `-1` in a single step. This applies everywhere — in `cleanup()`, in
+`run()`, in thread functions, and in any other context. NEVER manually
+reset the variable after `SAFE_CLOSE()`, and NEVER flag a missing
+`fd = -1` after `SAFE_CLOSE(fd)` as a bug — the macro already does it.
 
 ```c
 /* WRONG: redundant reset — SAFE_CLOSE() already sets fd = -1 */
@@ -473,6 +476,16 @@ static void cleanup(void) {
 }
 ```
 
+```c
+/* WRONG: flagging this as a double-close bug — it is NOT */
+static void *thread_func(void *arg) {
+    /* ... */
+    SAFE_CLOSE(uffd);
+    /* No need for uffd = -1 here — SAFE_CLOSE() already did it */
+    return NULL;
+}
+```
+
 ALWAYS rely on `SAFE_CLOSE()` to handle the reset:
 
 ```c
@@ -480,6 +493,15 @@ ALWAYS rely on `SAFE_CLOSE()` to handle the reset:
 static void cleanup(void) {
     if (fd != -1)
         SAFE_CLOSE(fd);
+}
+```
+
+```c
+/* CORRECT: no manual reset needed in any context */
+static void *thread_func(void *arg) {
+    /* ... */
+    SAFE_CLOSE(uffd);
+    return NULL;
 }
 ```
 
