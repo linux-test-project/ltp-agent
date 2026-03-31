@@ -92,7 +92,7 @@ jobs:
             SILENT_FLAG="-s"
           fi
 
-          copilot -p "The latest stable kernel release is ${LATEST_KERNEL}. Use this for G7 staging checks instead of fetching kernel.org. Run /ltp-review and print the full review output. Then run /ltp-email-reply and print the full email reply output." \
+          copilot -p "The latest stable kernel release is ${LATEST_KERNEL}. Use this for G7 staging checks instead of fetching kernel.org. Run /ltp-review, then run /ltp-ci-report. Print only the final CI report output." \
             --allow-tool='shell(git log:*)' \
             --allow-tool='shell(git show:*)' \
             --allow-tool='shell(git diff:*)' \
