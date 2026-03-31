@@ -89,10 +89,10 @@ Hi <firstname>,
 [...]
 
 [OR if Approved:]
-Reviewed-by: <git config user.name> <<git config user.email>>
+Reviewed-by: <LTP AI Reviewer> <<ltp-ai@noreply.github.com>>
 
 Regards,
-<git config user.name>
+<LTP AI Reviewer>
 ```
 
 ### Structure (multi-patch series)
@@ -117,7 +117,7 @@ Hi <firstname>,
 <comment>
 
 Regards,
-<git config user.name>
+<LTP AI Reviewer>
 ```
 
 ### Tone
