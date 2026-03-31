@@ -76,12 +76,9 @@ verbose content to keep the summary scannable.
 | <verdict-emoji> | `<short-hash>` | <subject> | <author> |
 
 <if any commit message issues>
-<details>
-<summary>Commit message issues</summary>
 
 - **<rule-id>** `<hash>` — <issue>
 
-</details>
 </if>
 
 ## Code Review
@@ -100,18 +97,18 @@ verbose content to keep the summary scannable.
 | **<rule-id>** | `<file>:<line>` | <description> |
 
 <for each issue with code context>
-<details>
-<summary><rule-id>: <short description></summary>
+
+#### <rule-id>: <short description>
 
 ```c
 <relevant code snippet from the diff>
 ```
-````
 
 <explanation of the issue and what to fix>
 
-</details>
 </for>
+````
+
 </if>
 
 <if pre-existing issues>
@@ -128,15 +125,11 @@ These are not caused by the patch and do not affect the verdict.
 
 ## Email Reply
 
-<details>
-<summary>Mailing list reply (click to expand)</summary>
-
 ```
 <output from /ltp-email-reply>
 ```
 
-</details>
-````
+```
 
 ### Verdict Emoji Mapping
 
@@ -150,8 +143,8 @@ These are not caused by the patch and do not affect the verdict.
 
 - Use GitHub-flavored markdown only (rendered in Actions step summary).
 - Use tables for structured data — they render well in step summaries.
-- Use `<details>` / `<summary>` for code snippets and verbose explanations
-  to keep the top-level summary compact.
+- Do NOT use `<details>` / `<summary>` collapsible sections — always show
+  all information directly.
 - Include short code snippets from the diff when flagging issues — show the
   problematic lines so the reader does not need to look up the file.
 - Do NOT include the full diff or full file contents.
@@ -165,3 +158,4 @@ These are not caused by the patch and do not affect the verdict.
 Print the markdown report as raw text, ready to be appended to
 `$GITHUB_STEP_SUMMARY`. Do not wrap it in a code block — output the
 markdown directly.
+```
