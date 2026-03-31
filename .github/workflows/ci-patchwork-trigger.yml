@@ -11,6 +11,10 @@ on:
   schedule:
     - cron: '*/15 * * * *'
 
+permissions:
+  actions: write
+  contents: read
+
 env:
   PATCHWORK_URL: https://patchwork.ozlabs.org
   # Look back 1 hour to account for schedule drift
