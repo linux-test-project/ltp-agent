@@ -3,11 +3,11 @@
 # Copyright (c) 2026 Andrea Cervesato <andrea.cervesato@suse.com>
 #
 # Clone the LTP repo, apply a patch, and run an AI review with email reply.
-# Supports both Claude Code and OpenCode as the review agent.
+# Supports Gemini CLI, Claude Code and OpenCode as the review agent.
 # By default only the email reply body is printed to stdout.
 #
 # Usage:
-#   start-review.sh [-d <dir>] [-c] [-v] [-i] [-a claude|opencode] <source>
+#   start-review.sh [-d <dir>] [-c] [-v] [-i] [-a claude|opencode|gemini] <source>
 #
 # Options:
 #   -d <dir>           Clone into <dir> instead of /tmp/ltp-<id>
@@ -15,7 +15,7 @@
 #   -v                 Verbose: show all output (clone, apply, review, email reply)
 #   -i                 Interactive: open agent in the clone dir after review
 #                      (allows claude --resume to work later)
-#   -a claude|opencode Choose the AI agent (default: auto-detect)
+#   -a claude|opencode|gemini Choose the AI agent (default: auto-detect)
 #
 # The <source> argument is anything accepted by apply-patch.sh:
 #   <patchwork-url>    https://patchwork.ozlabs.org/project/ltp/patch/...
@@ -78,16 +78,21 @@ command -v git >/dev/null 2>&1 || die "git is required"
 
 # Auto-detect agent if not specified
 if [ -z "$AGENT" ]; then
-	if command -v claude >/dev/null 2>&1; then
+	if command -v gemini >/dev/null 2>&1; then
+		AGENT="gemini"
+	elif command -v claude >/dev/null 2>&1; then
 		AGENT="claude"
 	elif command -v opencode >/dev/null 2>&1; then
 		AGENT="opencode"
 	else
-		die "no AI agent found: install claude or opencode"
+		die "no AI agent found: install gemini, claude or opencode"
 	fi
 fi
 
 case "$AGENT" in
+gemini)
+	command -v gemini >/dev/null 2>&1 || die "gemini CLI is required"
+	;;
 claude)
 	command -v claude >/dev/null 2>&1 || die "claude CLI is required"
 	;;
@@ -95,7 +100,7 @@ opencode)
 	command -v opencode >/dev/null 2>&1 || die "opencode CLI is required"
 	;;
 *)
-	die "unsupported agent: $AGENT (use 'claude' or 'opencode')"
+	die "unsupported agent: $AGENT (use 'claude', 'opencode' or 'gemini')"
 	;;
 esac
 
@@ -158,6 +163,15 @@ else
 fi
 
 case "$AGENT" in
+gemini)
+	if [ "$INTERACTIVE" -eq 1 ]; then
+		gemini -i "$PROMPT"
+	elif [ "$VERBOSE" -eq 1 ]; then
+		gemini -p "$PROMPT"
+	else
+		gemini -p "$PROMPT" 2>/dev/null
+	fi
+	;;
 claude)
 	if [ "$INTERACTIVE" -eq 1 ]; then
 		claude "$PROMPT" \
