@@ -80,7 +80,33 @@ All agent configuration files are in the `agents/` directory.
 **Trigger**: User requests a review of a patch, commit, branch, PR, or
 patchwork/lore URL.
 
-**Action**: Load the `review` skill via `skill({ name: "ltp-review" })`.
+**Action**: Run the `/ltp-review` skill.
+
+### Task: Smoke Test
+
+**Trigger**: User requests a smoke test, build test, or runtime test of a
+patch.
+
+**Action**: Run the `/ltp-review-smoke` skill.
+
+### Task: Email Reply
+
+**Trigger**: User requests a mailing list reply or email for a patch review.
+
+**Action**: Run the `/ltp-email-reply` skill.
+
+### Task: Convert Old Test API
+
+**Trigger**: User requests converting a test from old API (`test.h`) to new
+API (`tst_test.h`).
+
+**Action**: Run the `/ltp-convert` skill.
+
+### Task: CI Report
+
+**Trigger**: User requests a CI report or GitHub Actions summary for a review.
+
+**Action**: Run the `/ltp-ci-report` skill.
 
 ### Task: Write or Modify Open POSIX Tests
 
