@@ -37,7 +37,7 @@ jobs:
             --data "since=$date_param" \
             --data "archive=no")
 
-          echo "$response" | jq -r '.[] | .payload.series.id' > series.txt
+          echo "$response" | jq -r '.[] | "\(.payload.series.id)|\(.payload.series.mbox)"' > series.txt
           cat series.txt
 
       - name: Filter already-reviewed series
@@ -45,7 +45,7 @@ jobs:
         run: |
           touch dispatch.txt
 
-          while read -r series_id; do
+          while IFS='|' read -r series_id series_mbox; do
             [ -z "$series_id" ] && continue
 
             # Check if any patch in the series already has a check result
@@ -64,7 +64,7 @@ jobs:
             done
 
             if [ "$reviewed" = false ]; then
-              echo "$series_id" >> dispatch.txt
+              echo "$series_id|$series_mbox" >> dispatch.txt
             fi
           done < series.txt
 
@@ -80,8 +80,8 @@ jobs:
             const lines = fs.readFileSync('dispatch.txt', 'utf8').trim().split('\n');
 
             for (const line of lines) {
-              const series_id = line.trim();
-              if (!series_id) continue;
+              if (!line) continue;
+              const [series_id, series_mbox] = line.split('|');
 
               console.log(`Dispatching review for series ${series_id}`);
               await github.rest.actions.createWorkflowDispatch({
@@ -91,6 +91,7 @@ jobs:
                 workflow_id: 'ci-copilot-review.yml',
                 inputs: {
                   SERIES_ID: series_id,
+                  SERIES_MBOX: series_mbox,
                 }
               });
             }
