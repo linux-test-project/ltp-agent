@@ -151,10 +151,10 @@ log ""
 log "Running review with $AGENT ..."
 log ""
 
-PROMPT_VERBOSE="Run /ltp-review and print the full review output \
-to the user. Then run /ltp-email-reply and print the full email \
+PROMPT_VERBOSE="Run the /ltp-review skill and print the full review output \
+to the user. Then run the /ltp-email-reply skill and print the full email \
 reply output to the user. You MUST print both outputs as text."
-PROMPT_QUIET="Run /ltp-review, then run /ltp-email-reply and show only the email reply body"
+PROMPT_QUIET="Run the /ltp-review skill, then run the /ltp-email-reply skill and show only the email reply body"
 
 if [ "$VERBOSE" -eq 1 ]; then
 	PROMPT="$PROMPT_VERBOSE"
