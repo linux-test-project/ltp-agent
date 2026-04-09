@@ -34,7 +34,6 @@ jobs:
           response=$(curl -sfk -G "$PATCHWORK_URL/api/events/" \
             --data "category=series-completed" \
             --data "project=ltp" \
-            --data "state=new" \
             --data "since=$date_param" \
             --data "archive=no")
 
@@ -56,8 +55,9 @@ jobs:
 
             reviewed=false
             for patch_id in $patches; do
-              checks=$(curl -sfk "$PATCHWORK_URL/api/patches/$patch_id/checks/" | jq -r '.[].id')
-              if [ -n "$checks" ]; then
+              has_review=$(curl -sfk "$PATCHWORK_URL/api/patches/$patch_id/checks/" | \
+                jq -r '[.[] | select(.context == "copilot-review")] | length')
+              if [ "$has_review" -gt 0 ]; then
                 reviewed=true
                 break
               fi
