@@ -28,6 +28,16 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
+      - name: Extract and validate series ID
+        id: series
+        run: |
+          series_id=$(echo "${{ inputs.SERIES_MBOX }}" | grep -oP '/series/\K[0-9]+' || true)
+          if [ -z "$series_id" ]; then
+            echo "::error::Could not extract series ID from '${{ inputs.SERIES_MBOX }}'"
+            exit 1
+          fi
+          echo "id=$series_id" >> "$GITHUB_OUTPUT"
+
       - name: Checkout ltp-agent
         uses: actions/checkout@v5
         with:
@@ -44,12 +54,6 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -yqq man-db manpages-dev manpages-posix-dev
           sudo git clone --depth 1 https://github.com/torvalds/linux /usr/src/linux
-
-      - name: Extract series ID
-        id: series
-        run: |
-          series_id=$(echo "${{ inputs.SERIES_MBOX }}" | grep -oP '/series/\K[0-9]+')
-          echo "id=$series_id" >> "$GITHUB_OUTPUT"
 
       - name: Apply patch series
         working-directory: ltp
