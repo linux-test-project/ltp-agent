@@ -12,9 +12,6 @@ on:
       SERIES_ID:
         description: Patchwork series ID
         required: true
-      SERIES_MBOX:
-        description: Patchwork series mbox URL
-        required: true
       VERBOSE:
         description: Show full Copilot output in the step log
         type: boolean
@@ -25,6 +22,7 @@ permissions:
 
 env:
   LTP_UPSTREAM: https://github.com/linux-test-project/ltp.git
+  PATCHWORK_URL: https://patchwork.ozlabs.org
   AGENT_DIR: ${{ github.workspace }}/ltp-agent
 
 jobs:
@@ -54,7 +52,7 @@ jobs:
           git config user.name "LTP CI"
           git config user.email "ltp-ci@noreply.github.com"
           git checkout -b "review/series-${{ inputs.SERIES_ID }}" master
-          curl -sfkL "${{ inputs.SERIES_MBOX }}" -o /tmp/series.mbox
+          curl -sfkL "$PATCHWORK_URL/series/${{ inputs.SERIES_ID }}/mbox/" -o /tmp/series.mbox
           git am /tmp/series.mbox
           rm -f /tmp/series.mbox
 
@@ -128,7 +126,6 @@ jobs:
       - name: Post results to Patchwork
         if: always()
         env:
-          PATCHWORK_URL: https://patchwork.ozlabs.org
           PATCHWORK_TOKEN: ${{ secrets.PATCHWORK_TOKEN }}
         run: |
           if [ -z "$PATCHWORK_TOKEN" ]; then
