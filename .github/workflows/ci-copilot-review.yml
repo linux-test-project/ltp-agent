@@ -9,9 +9,6 @@ name: "Copilot patch review"
 on:
   workflow_dispatch:
     inputs:
-      SERIES_ID:
-        description: Patchwork series ID
-        required: true
       SERIES_MBOX:
         description: Patchwork series mbox URL
         required: true
@@ -48,19 +45,25 @@ jobs:
           sudo apt-get install -yqq man-db manpages-dev manpages-posix-dev
           sudo git clone --depth 1 https://github.com/torvalds/linux /usr/src/linux
 
+      - name: Extract series ID
+        id: series
+        run: |
+          series_id=$(echo "${{ inputs.SERIES_MBOX }}" | grep -oP '/series/\K[0-9]+')
+          echo "id=$series_id" >> "$GITHUB_OUTPUT"
+
       - name: Apply patch series
         working-directory: ltp
         run: |
           git config user.name "LTP CI"
           git config user.email "ltp-ci@noreply.github.com"
-          git checkout -b "review/series-${{ inputs.SERIES_ID }}" master
+          git checkout -b "review/series-${{ steps.series.outputs.id }}" master
           curl -sfkL "${{ inputs.SERIES_MBOX }}" -o /tmp/series.mbox
           git am /tmp/series.mbox
           rm -f /tmp/series.mbox
 
           echo "### Patch Series" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Series ID:** ${{ inputs.SERIES_ID }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Series ID:** ${{ steps.series.outputs.id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Branch:** $(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Commits:** $(git rev-list --count master..HEAD)" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -136,7 +139,7 @@ jobs:
             exit 0
           fi
 
-          series_id="${{ inputs.SERIES_ID }}"
+          series_id="${{ steps.series.outputs.id }}"
           target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           context="copilot-review"
 
