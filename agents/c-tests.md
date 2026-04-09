@@ -469,40 +469,17 @@ reset the variable after `SAFE_CLOSE()`, and NEVER flag a missing
 
 ```c
 /* WRONG: redundant reset — SAFE_CLOSE() already sets fd = -1 */
-static void cleanup(void) {
-    if (fd != -1)
-        SAFE_CLOSE(fd);
-    fd = -1;
-}
-```
-
-```c
-/* WRONG: flagging this as a double-close bug — it is NOT */
-static void *thread_func(void *arg) {
-    /* ... */
-    SAFE_CLOSE(uffd);
-    /* No need for uffd = -1 here — SAFE_CLOSE() already did it */
-    return NULL;
-}
+if (fd != -1)
+    SAFE_CLOSE(fd);
+fd = -1;
 ```
 
 ALWAYS rely on `SAFE_CLOSE()` to handle the reset:
 
 ```c
 /* CORRECT: SAFE_CLOSE() sets fd = -1 internally */
-static void cleanup(void) {
-    if (fd != -1)
-        SAFE_CLOSE(fd);
-}
-```
-
-```c
-/* CORRECT: no manual reset needed in any context */
-static void *thread_func(void *arg) {
-    /* ... */
-    SAFE_CLOSE(uffd);
-    return NULL;
-}
+if (fd != -1)
+    SAFE_CLOSE(fd);
 ```
 
 #### Use `fd != -1` to check file descriptor validity
@@ -511,26 +488,20 @@ NEVER use `fd >= 0` or `fd > 0` to check whether a file descriptor is valid:
 
 ```c
 /* WRONG: fd >= 0 is not the LTP convention */
-static void cleanup(void) {
-    if (fd >= 0)
-        SAFE_CLOSE(fd);
-}
+if (fd >= 0)
+    SAFE_CLOSE(fd);
 
 /* WRONG: fd > 0 silently skips fd 0 which is valid */
-static void cleanup(void) {
-    if (fd > 0)
-        SAFE_CLOSE(fd);
-}
+if (fd > 0)
+    SAFE_CLOSE(fd);
 ```
 
 ALWAYS use `fd != -1` since file descriptors are initialized to `-1`:
 
 ```c
 /* CORRECT: matches the -1 initialization convention */
-static void cleanup(void) {
-    if (fd != -1)
-        SAFE_CLOSE(fd);
-}
+if (fd != -1)
+    SAFE_CLOSE(fd);
 ```
 
 ### Tests Results
