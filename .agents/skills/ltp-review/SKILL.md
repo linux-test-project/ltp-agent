@@ -161,7 +161,11 @@ Check EACH rule below. Mark ✅, ❌, or N/A.
   verify `.supported_archs` is used (see C rule §13). For shell tests:
   CI runs `checkbashisms`, but verify no `[[ ]]`, arrays, `function`
   keyword, or process substitution are present.
-- **G7 Staging for unreleased**:
+- **G7 One logical change**:
+  Read each commit in the series. Verify that each commit contains exactly
+  one logical change (no mixed bugfixes/renames, etc.). Verify each patch
+  is self-contained. Flag any violations.
+- **G8 Staging for unreleased**:
   If the test targets a specific kernel version, fetch
   `https://www.kernel.org` and compare the latest stable release against
   the test's target version. If the feature is not in a released kernel,
@@ -318,7 +322,7 @@ ALWAYS output in this EXACT format:
 
 ## Decision Rules
 
-- ANY ground rule violation (G1–G7) → **Needs revision** ❌
+- ANY ground rule violation (G1–G8) → **Needs revision** ❌
 - ANY commit message violation (M1–M5) → **Needs revision** ❌
 - ANY C test rule violation (C1–C15) → **Needs revision** ❌
 - ANY shell test rule violation (S1–S12) → **Needs revision** ❌

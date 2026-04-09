@@ -54,8 +54,8 @@ and build the Patchwork link:
 
 ## Phase 2: Format the Report
 
-Generate a GitHub-flavored markdown report. Use collapsible sections for
-verbose content to keep the summary scannable.
+Generate a GitHub-flavored markdown report. Keep the summary scannable by
+using structured tables.
 
 ### Structure
 
@@ -85,7 +85,7 @@ verbose content to keep the summary scannable.
 
 | Category             | Status      |
 | -------------------- | ----------- |
-| Ground rules (G1–G7) | <pass/fail> |
+| Ground rules (G1–G8) | <pass/fail> |
 | <C/S/P test rules>   | <pass/fail> |
 
 <if issues found>
