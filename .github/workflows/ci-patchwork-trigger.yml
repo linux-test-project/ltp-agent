@@ -9,7 +9,7 @@ name: "Patchwork review trigger"
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0 * * * *'
 
 permissions:
   actions: write
@@ -17,8 +17,8 @@ permissions:
 
 env:
   PATCHWORK_URL: https://patchwork.ozlabs.org
-  # Look back 1 hour to account for schedule drift
-  PATCHWORK_SINCE: 3600
+  # Look back 75 minutes to account for schedule drift
+  PATCHWORK_SINCE: 4500
 
 jobs:
   check:
