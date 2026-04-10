@@ -49,6 +49,8 @@ When reviewing or writing C tests, verify ALL of the following:
 - Variables declared after statements (C99/C11 style) are allowed. Declaring
   at the top of the block is preferred but NOT mandatory — do NOT flag
   mixed declarations as errors
+- Identifiers e.g. function, variable, macro names must not start with
+  underscore since these are reserved for compiler, kernel, and libc
 
 ### 2. API Usage
 
