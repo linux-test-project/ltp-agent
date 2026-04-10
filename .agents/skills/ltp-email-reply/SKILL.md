@@ -63,20 +63,39 @@ read its output and incorporate any runtime or build findings into the email.
   separated by a blank line before and after.
 - Do NOT quote the entire patch — only quote the lines directly relevant to
   each comment. Use `[...]` to indicate skipped context between quoted blocks.
-- Start the email with a greeting: `Hi <author first name>,`
 - If the verdict is **Approved**, say so clearly and add a
   `Reviewed-by: <name> <email>` trailer using git config user details.
 - If the verdict is **Needs revision**, list each issue inline in the patch
   and close with a brief summary of what needs fixing.
 - If the verdict is **Needs discussion**, raise the open question clearly.
 
+### Preamble
+
+Every email **must** start with a preamble before the inline review.
+This informs the recipient that the review was produced by an automated
+agent.
+
+```
+Hi <firstname>,
+
+our agent completed the review of the patch. The full review can be
+found at: <review_url>
+
+The agent can sometimes produce false positives although often its
+findings are genuine. If you find issues with the review, please
+comment this email or ignore the suggestions.
+```
+
+`<review_url>` is built from the environment variable `REVIEW_URL` if
+set, otherwise omit the "The full review can be found at:" sentence.
+
 ### Structure (single patch or single-patch series)
 
 ```
+<preamble>
+
 On <date>, <author> wrote:
 > <patch subject line>
-
-Hi <firstname>,
 
 > [relevant diff hunk or code line]
 
@@ -97,20 +116,30 @@ Regards,
 
 ### Structure (multi-patch series)
 
-Generate a **separate email block** for each patch that has findings.
-Label each block with `--- Reply to [PATCH N/M] ---`. If a patch has no
-issues, skip it — do not generate an empty reply for it.
+The entire review is sent as **one email**, replying to the first patch
+in the series. Use `--- [PATCH N/M] ---` markers as visual separators
+between per-patch comments within the single email body. Only include
+patches that have findings — skip patches with no issues.
 
-If ALL patches are approved, generate a single reply to the cover letter
-(or patch 1 if no cover letter) with the Reviewed-by tag.
+If ALL patches are approved, omit the `--- [PATCH N/M] ---` markers and
+include a single Reviewed-by tag.
 
 ```
---- Reply to [PATCH N/M] ---
+<preamble>
+
+--- [PATCH 1/M] ---
 
 On <date>, <author> wrote:
 > <patch subject line>
 
-Hi <firstname>,
+> [relevant diff hunk or code line]
+
+<comment>
+
+--- [PATCH 3/M] ---
+
+On <date>, <author> wrote:
+> <patch subject line>
 
 > [relevant diff hunk or code line]
 

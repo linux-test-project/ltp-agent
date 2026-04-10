@@ -43,7 +43,8 @@ jobs:
       - name: Install kernel source and man pages
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -yqq man-db manpages-dev manpages-posix-dev
+          sudo add-apt-repository -y ppa:git-core/ppa
+          sudo apt-get install -yqq man-db manpages-dev manpages-posix-dev git-email
           sudo git clone --depth 1 https://github.com/torvalds/linux /usr/src/linux
 
       - name: Install pwclient and b4
@@ -65,14 +66,23 @@ jobs:
         id: series
         run: |
           series_id="${{ inputs.SERIES_ID }}"
+          output=$(pwclient list -p ltp -S "$series_id" -f $'%{id}\t%{msgid}\t%{submitter}\t%{name}')
 
-          patch_ids=$(pwclient list -p ltp -S "$series_id" -f '%{id}')
-          msgid=$(pwclient list -p ltp -S "$series_id" -f '%{msgid}' | head -1)
+          patch_ids=$(echo "$output" | cut -f1 | tr '\n' ' ')
+
+          # Find patch 1/N by name; fall back to first line for single patches
+          first=$(echo "$output" | grep -E '\b1/' | head -1)
+          if [ -z "$first" ]; then
+            first=$(echo "$output" | head -1)
+          fi
+          msgid=$(echo "$first" | cut -f2)
+          submitter=$(echo "$first" | cut -f3)
 
           echo "patch_ids=$patch_ids" >> "$GITHUB_OUTPUT"
           echo "msgid=$msgid" >> "$GITHUB_OUTPUT"
+          echo "submitter=$submitter" >> "$GITHUB_OUTPUT"
 
-          echo "Series $series_id: patches=[$patch_ids] msgid=$msgid"
+          echo "Series $series_id: patches=[$patch_ids] msgid=$msgid submitter=$submitter"
 
       - name: Apply patch series
         working-directory: ltp
@@ -109,6 +119,7 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
           LATEST_KERNEL: ${{ steps.kver.outputs.version }}
+          REVIEW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -o pipefail
 
@@ -132,48 +143,110 @@ jobs:
             $SILENT_FLAG \
             | tee /tmp/review-output.txt
 
-          # Extract verdict for Patchwork check
-          if grep -qi "Approved" /tmp/review-output.txt; then
-            echo "verdict=success" >> "$GITHUB_OUTPUT"
-            echo "description=Approved" >> "$GITHUB_OUTPUT"
-          else
-            echo "verdict=warning" >> "$GITHUB_OUTPUT"
-            if grep -qi "Needs discussion" /tmp/review-output.txt; then
-              echo "description=Needs discussion" >> "$GITHUB_OUTPUT"
-            else
-              echo "description=Needs revision" >> "$GITHUB_OUTPUT"
-            fi
-          fi
+          # TODO: re-enable after email testing
+          # # Extract verdict for Patchwork check
+          # if grep -qi "Approved" /tmp/review-output.txt; then
+          #   echo "verdict=success" >> "$GITHUB_OUTPUT"
+          #   echo "description=Approved" >> "$GITHUB_OUTPUT"
+          # else
+          #   echo "verdict=warning" >> "$GITHUB_OUTPUT"
+          #   if grep -qi "Needs discussion" /tmp/review-output.txt; then
+          #     echo "description=Needs discussion" >> "$GITHUB_OUTPUT"
+          #   else
+          #     echo "description=Needs revision" >> "$GITHUB_OUTPUT"
+          #   fi
+          # fi
 
           echo "---" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/review-output.txt >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Post results to Patchwork
-        if: always()
+      # TODO: re-enable after email testing
+      # - name: Post results to Patchwork
+      #   if: always()
+      #   run: |
+      #     if [ -z "${{ secrets.PATCHWORK_TOKEN }}" ]; then
+      #       echo "PATCHWORK_TOKEN not set, skipping Patchwork update"
+      #       exit 0
+      #     fi
+      #
+      #     target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      #     context="copilot-review"
+      #
+      #     # Use review verdict if available, otherwise mark as pending
+      #     state="${{ steps.review.outputs.verdict }}"
+      #     description="${{ steps.review.outputs.description }}"
+      #     if [ -z "$state" ]; then
+      #       state="pending"
+      #       description="Review did not complete"
+      #     fi
+      #
+      #     for patch_id in ${{ steps.series.outputs.patch_ids }}; do
+      #       [ -z "$patch_id" ] && continue
+      #
+      #       echo "Posting check for patch $patch_id: state=$state"
+      #       pwclient check-create -p ltp \
+      #         -s "$state" -c "$context" \
+      #         -u "$target_url" -d "$description" \
+      #         "$patch_id"
+      #     done
+
+      - name: Send review to mailing list
+        if: steps.review.outcome == 'success'
+        working-directory: ltp
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
         run: |
-          if [ -z "${{ secrets.PATCHWORK_TOKEN }}" ]; then
-            echo "PATCHWORK_TOKEN not set, skipping Patchwork update"
+          if [ -z "$SMTP_SERVER" ] || [ -z "$SMTP_USER" ] || [ -z "$SMTP_PASS" ]; then
+            echo "SMTP credentials not configured, skipping email send"
             exit 0
           fi
 
-          target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          context="copilot-review"
+          body=$(awk '
+            /^## Email Reply/ { found = 1; next }
+            found && /^```/ { if (in_block) exit; in_block = 1; next }
+            found && in_block { print }
+          ' /tmp/review-output.txt)
 
-          # Use review verdict if available, otherwise mark as pending
-          state="${{ steps.review.outputs.verdict }}"
-          description="${{ steps.review.outputs.description }}"
-          if [ -z "$state" ]; then
-            state="pending"
-            description="Review did not complete"
+          if [ -z "$body" ]; then
+            echo "Could not extract email body, skipping email send"
+            exit 0
           fi
 
-          for patch_id in ${{ steps.series.outputs.patch_ids }}; do
-            [ -z "$patch_id" ] && continue
+          submitter="${{ steps.series.outputs.submitter }}"
+          msgid="${{ steps.series.outputs.msgid }}"
+          case "$msgid" in "<"*) ;; *) msgid="<$msgid>" ;; esac
 
-            echo "Posting check for patch $patch_id: state=$state"
-            pwclient check-create -p ltp \
-              -s "$state" -c "$context" \
-              -u "$target_url" -d "$description" \
-              "$patch_id"
-          done
+          subject="Re: $(git log --format='%s' --reverse master..HEAD | head -1)"
+
+          git config --global sendemail.smtpSslCertPath ""
+
+          mail_dir=$(mktemp -d)
+          trap 'rm -rf "$mail_dir"' EXIT
+
+          {
+            echo "Subject: $subject"
+            echo "In-Reply-To: $msgid"
+            echo "References: $msgid"
+            echo ""
+            echo "$body"
+          } > "$mail_dir/0001.email"
+
+          git send-email \
+            --from="$SMTP_USER" \
+            --to="$submitter" \
+            --cc=ltp@lists.linux.it \
+            --smtp-server="$SMTP_SERVER" \
+            --smtp-server-port="${SMTP_PORT:-587}" \
+            --smtp-user="$SMTP_USER" \
+            --smtp-pass="$SMTP_PASS" \
+            --smtp-encryption=tls \
+            --transfer-encoding=8bit \
+            --confirm=never \
+            --quiet \
+            "$mail_dir"
+
+          echo "Review email sent to $submitter (Cc: ltp@lists.linux.it)"
