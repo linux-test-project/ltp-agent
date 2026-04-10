@@ -24,20 +24,30 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - name: Install pwclient
+        run: |
+          pip install 'pwclient @ git+https://github.com/getpatchwork/pwclient'
+
+          mkdir -p ~/.config
+          cat > ~/.pwclientrc <<EOF
+          [options]
+          default = ltp
+
+          [ltp]
+          backend = rest
+          url = $PATCHWORK_URL/api/
+          EOF
+
       - name: Fetch new series from Patchwork
         id: fetch
         run: |
           current_time=$(date +%s)
           since_time=$((current_time - PATCHWORK_SINCE))
-          date_param=$(date -u -d @$since_time +"%Y-%m-%dT%H:%M:%SZ")
+          since=$(date -u -d @$since_time +"%Y-%m-%dT%H:%M:%SZ")
 
-          response=$(curl -sfk -G "$PATCHWORK_URL/api/events/" \
-            --data "category=series-completed" \
-            --data "project=ltp" \
-            --data "since=$date_param" \
-            --data "archive=no")
+          pwclient event-list -p ltp -c series-completed \
+            --since "$since" -f '%{series_id}' > series.txt
 
-          echo "$response" | jq -r '.[] | "\(.payload.series.id) \(.payload.series.mbox)"' > series.txt
           cat series.txt
 
       - name: Filter already-reviewed series
@@ -45,26 +55,22 @@ jobs:
         run: |
           touch dispatch.txt
 
-          while read -r series_id series_mbox; do
+          while read -r series_id; do
             [ -z "$series_id" ] && continue
 
-            # Check if any patch in the series already has a check result
-            patches=$(curl -sfk -G "$PATCHWORK_URL/api/patches/" \
-              --data "project=ltp" \
-              --data "series=$series_id" | jq -r '.[].id')
+            patch_ids=$(pwclient list -p ltp -S "$series_id" -f '%{id}')
 
             reviewed=false
-            for patch_id in $patches; do
-              has_review=$(curl -sfk "$PATCHWORK_URL/api/patches/$patch_id/checks/" | \
-                jq -r '[.[] | select(.context == "copilot-review")] | length')
-              if [ "$has_review" -gt 0 ]; then
+            for patch_id in $patch_ids; do
+              context=$(pwclient check-get -p ltp "$patch_id" -f '%{context}' 2>/dev/null || true)
+              if echo "$context" | grep -q "copilot-review"; then
                 reviewed=true
                 break
               fi
             done
 
             if [ "$reviewed" = false ]; then
-              echo "$series_mbox" >> dispatch.txt
+              echo "$series_id" >> dispatch.txt
             fi
           done < series.txt
 
@@ -80,17 +86,17 @@ jobs:
             const lines = fs.readFileSync('dispatch.txt', 'utf8').trim().split('\n');
 
             for (const line of lines) {
-              const series_mbox = line.trim();
-              if (!series_mbox) continue;
+              const series_id = line.trim();
+              if (!series_id) continue;
 
-              console.log(`Dispatching review for ${series_mbox}`);
+              console.log(`Dispatching review for series ${series_id}`);
               await github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: context.ref,
                 workflow_id: 'ci-copilot-review.yml',
                 inputs: {
-                  SERIES_MBOX: series_mbox,
+                  SERIES_ID: series_id,
                 }
               });
             }

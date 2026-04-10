@@ -9,8 +9,8 @@ name: "Copilot patch review"
 on:
   workflow_dispatch:
     inputs:
-      SERIES_MBOX:
-        description: Patchwork series mbox URL
+      SERIES_ID:
+        description: Patchwork series ID
         required: true
       VERBOSE:
         description: Show full Copilot output in the step log
@@ -23,21 +23,12 @@ permissions:
 env:
   LTP_UPSTREAM: https://github.com/linux-test-project/ltp.git
   AGENT_DIR: ${{ github.workspace }}/ltp-agent
+  PATCHWORK_URL: https://patchwork.ozlabs.org
 
 jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - name: Extract and validate series ID
-        id: series
-        run: |
-          series_id=$(echo "${{ inputs.SERIES_MBOX }}" | grep -oP '/series/\K[0-9]+' || true)
-          if [ -z "$series_id" ]; then
-            echo "::error::Could not extract series ID from '${{ inputs.SERIES_MBOX }}'"
-            exit 1
-          fi
-          echo "id=$series_id" >> "$GITHUB_OUTPUT"
-
       - name: Checkout ltp-agent
         uses: actions/checkout@v5
         with:
@@ -55,19 +46,45 @@ jobs:
           sudo apt-get install -yqq man-db manpages-dev manpages-posix-dev
           sudo git clone --depth 1 https://github.com/torvalds/linux /usr/src/linux
 
+      - name: Install pwclient and b4
+        run: |
+          pip install 'pwclient @ git+https://github.com/getpatchwork/pwclient'
+          pip install b4
+
+          cat > ~/.pwclientrc <<EOF
+          [options]
+          default = ltp
+
+          [ltp]
+          backend = rest
+          url = $PATCHWORK_URL/api/
+          token = ${{ secrets.PATCHWORK_TOKEN }}
+          EOF
+
+      - name: Resolve series metadata
+        id: series
+        run: |
+          series_id="${{ inputs.SERIES_ID }}"
+
+          patch_ids=$(pwclient list -p ltp -S "$series_id" -f '%{id}')
+          msgid=$(pwclient list -p ltp -S "$series_id" -f '%{msgid}' | head -1)
+
+          echo "patch_ids=$patch_ids" >> "$GITHUB_OUTPUT"
+          echo "msgid=$msgid" >> "$GITHUB_OUTPUT"
+
+          echo "Series $series_id: patches=[$patch_ids] msgid=$msgid"
+
       - name: Apply patch series
         working-directory: ltp
         run: |
           git config user.name "LTP CI"
           git config user.email "ltp-ci@noreply.github.com"
-          git checkout -b "review/series-${{ steps.series.outputs.id }}" master
-          curl -sfkL "${{ inputs.SERIES_MBOX }}" -o /tmp/series.mbox
-          git am /tmp/series.mbox
-          rm -f /tmp/series.mbox
+          git checkout -b "review/series-${{ inputs.SERIES_ID }}" master
+          b4 shazam "${{ steps.series.outputs.msgid }}"
 
           echo "### Patch Series" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Series ID:** ${{ steps.series.outputs.id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Series ID:** ${{ inputs.SERIES_ID }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Branch:** $(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Commits:** $(git rev-list --count master..HEAD)" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -134,16 +151,12 @@ jobs:
 
       - name: Post results to Patchwork
         if: always()
-        env:
-          PATCHWORK_URL: https://patchwork.ozlabs.org
-          PATCHWORK_TOKEN: ${{ secrets.PATCHWORK_TOKEN }}
         run: |
-          if [ -z "$PATCHWORK_TOKEN" ]; then
+          if [ -z "${{ secrets.PATCHWORK_TOKEN }}" ]; then
             echo "PATCHWORK_TOKEN not set, skipping Patchwork update"
             exit 0
           fi
 
-          series_id="${{ steps.series.outputs.id }}"
           target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           context="copilot-review"
 
@@ -155,19 +168,12 @@ jobs:
             description="Review did not complete"
           fi
 
-          patches=$(curl -sfk -G "$PATCHWORK_URL/api/patches/" \
-            --data "project=ltp" \
-            --data "series=$series_id" | jq -r '.[].id')
-
-          for patch_id in $patches; do
+          for patch_id in ${{ steps.series.outputs.patch_ids }}; do
             [ -z "$patch_id" ] && continue
 
             echo "Posting check for patch $patch_id: state=$state"
-            curl -sfk -X POST \
-              -H "Authorization: Token $PATCHWORK_TOKEN" \
-              -F "state=$state" \
-              -F "context=$context" \
-              -F "target_url=$target_url" \
-              -F "description=$description" \
-              "$PATCHWORK_URL/api/patches/$patch_id/checks/"
+            pwclient check-create -p ltp \
+              -s "$state" -c "$context" \
+              -u "$target_url" -d "$description" \
+              "$patch_id"
           done
