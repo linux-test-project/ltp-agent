@@ -143,53 +143,51 @@ jobs:
             $SILENT_FLAG \
             | tee /tmp/review-output.txt
 
-          # TODO: re-enable after email testing
-          # # Extract verdict for Patchwork check
-          # if grep -qi "Approved" /tmp/review-output.txt; then
-          #   echo "verdict=success" >> "$GITHUB_OUTPUT"
-          #   echo "description=Approved" >> "$GITHUB_OUTPUT"
-          # else
-          #   echo "verdict=warning" >> "$GITHUB_OUTPUT"
-          #   if grep -qi "Needs discussion" /tmp/review-output.txt; then
-          #     echo "description=Needs discussion" >> "$GITHUB_OUTPUT"
-          #   else
-          #     echo "description=Needs revision" >> "$GITHUB_OUTPUT"
-          #   fi
-          # fi
+          # Extract verdict for Patchwork check
+          if grep -qi "Approved" /tmp/review-output.txt; then
+            echo "verdict=success" >> "$GITHUB_OUTPUT"
+            echo "description=Approved" >> "$GITHUB_OUTPUT"
+          else
+            echo "verdict=warning" >> "$GITHUB_OUTPUT"
+            if grep -qi "Needs discussion" /tmp/review-output.txt; then
+              echo "description=Needs discussion" >> "$GITHUB_OUTPUT"
+            else
+              echo "description=Needs revision" >> "$GITHUB_OUTPUT"
+            fi
+          fi
 
           echo "---" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/review-output.txt >> "$GITHUB_STEP_SUMMARY"
 
-      # TODO: re-enable after email testing
-      # - name: Post results to Patchwork
-      #   if: always()
-      #   run: |
-      #     if [ -z "${{ secrets.PATCHWORK_TOKEN }}" ]; then
-      #       echo "PATCHWORK_TOKEN not set, skipping Patchwork update"
-      #       exit 0
-      #     fi
-      #
-      #     target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      #     context="copilot-review"
-      #
-      #     # Use review verdict if available, otherwise mark as pending
-      #     state="${{ steps.review.outputs.verdict }}"
-      #     description="${{ steps.review.outputs.description }}"
-      #     if [ -z "$state" ]; then
-      #       state="pending"
-      #       description="Review did not complete"
-      #     fi
-      #
-      #     for patch_id in ${{ steps.series.outputs.patch_ids }}; do
-      #       [ -z "$patch_id" ] && continue
-      #
-      #       echo "Posting check for patch $patch_id: state=$state"
-      #       pwclient check-create -p ltp \
-      #         -s "$state" -c "$context" \
-      #         -u "$target_url" -d "$description" \
-      #         "$patch_id"
-      #     done
+      - name: Post results to Patchwork
+        if: always()
+        run: |
+          if [ -z "${{ secrets.PATCHWORK_TOKEN }}" ]; then
+            echo "PATCHWORK_TOKEN not set, skipping Patchwork update"
+            exit 0
+          fi
+
+          target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          context="copilot-review"
+
+          # Use review verdict if available, otherwise mark as pending
+          state="${{ steps.review.outputs.verdict }}"
+          description="${{ steps.review.outputs.description }}"
+          if [ -z "$state" ]; then
+            state="pending"
+            description="Review did not complete"
+          fi
+
+          for patch_id in ${{ steps.series.outputs.patch_ids }}; do
+            [ -z "$patch_id" ] && continue
+
+            echo "Posting check for patch $patch_id: state=$state"
+            pwclient check-create -p ltp \
+              -s "$state" -c "$context" \
+              -u "$target_url" -d "$description" \
+              "$patch_id"
+          done
 
       - name: Send review to mailing list
         if: steps.review.outcome == 'success'
