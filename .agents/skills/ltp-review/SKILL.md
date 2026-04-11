@@ -68,7 +68,8 @@ checklist. Only review commit messages and verify the changes are correct.
 management. They are not real patches — do NOT review them, do NOT flag them,
 do NOT ask to squash them.
 
-For EACH remaining commit (`git log master..HEAD`), review the message quality:
+For EACH remaining commit (`git log master..HEAD`), judge whether the message
+is **clear and informative**:
 
 - **M1 Subject is clear**: Describes WHAT changed concisely. Flag if the
   subject is generic (e.g. "fix test", "update code") without naming the
@@ -97,9 +98,6 @@ For EACH remaining commit (`git log master..HEAD`), review the message quality:
   self-contained — no commit should reference code added by a later commit.
   For each commit N, verify it does not call functions or use variables
   introduced by commit N+1 or later.
-
-CI already checks the mechanical parts (Signed-off-by presence, subject length).
-Your job is to judge whether the message is **clear and informative**.
 
 ## Phase 3: Code Review
 
