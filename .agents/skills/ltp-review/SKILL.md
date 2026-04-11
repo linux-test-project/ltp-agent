@@ -84,8 +84,14 @@ For EACH remaining commit (`git log master..HEAD`), review the message quality:
   Each patch MUST compile on its own and MUST NOT introduce intermediate
   breakage. Flag patches that mix unrelated changes (e.g. a bugfix bundled
   with a rename, or a new test bundled with cleanup of an old one).
-- **M4 Fixes tag**: If fixing a bug, `Fixes:` tag is present
-- **M5 Series ordering** (multi-commit only): Commits are in logical order
+- **M4 Fixes tag**: If fixing a bug, `Fixes:` tag is present. The tag MUST be
+  present in the ending section of the commit message, not at the beginning.
+- **M5 Tags at the end**: All tags (e.g. `Signed-off-by:`, `Fixes:`,
+  `Suggested-by:`, `Reviewed-by:`, `Acked-by:`, `Reported-by:`, `Link:`,
+  `Closes:`, `Cc:`) MUST appear at the end of the commit message body,
+  after the explanatory text — not at the beginning or interleaved within
+  it.
+- **M6 Series ordering** (multi-commit only): Commits are in logical order
   (e.g. helper/library changes before the test that uses them, cleanup
   before new code that depends on it). Each intermediate commit must be
   self-contained — no commit should reference code added by a later commit.
@@ -323,7 +329,7 @@ ALWAYS output in this EXACT format:
 ## Decision Rules
 
 - ANY ground rule violation (G1–G8) → **Needs revision** ❌
-- ANY commit message violation (M1–M5) → **Needs revision** ❌
+- ANY commit message violation (M1–M6) → **Needs revision** ❌
 - ANY C test rule violation (C1–C15) → **Needs revision** ❌
 - ANY shell test rule violation (S1–S12) → **Needs revision** ❌
 - ANY Open POSIX rule violation (P1–P11) → **Needs revision** ❌
