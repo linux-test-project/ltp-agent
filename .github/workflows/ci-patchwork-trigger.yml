@@ -17,8 +17,10 @@ permissions:
 
 env:
   PATCHWORK_URL: https://patchwork.ozlabs.org
-  # Look back 75 minutes to account for schedule drift
+  # Fallback lookback in seconds when no previous successful run exists
   PATCHWORK_SINCE: 4500
+  # Maximum lookback in seconds (24h) to avoid flooding the API
+  PATCHWORK_MAX_SINCE: 86400
 
 jobs:
   check:
@@ -38,11 +40,44 @@ jobs:
           url = $PATCHWORK_URL/api/
           EOF
 
+      - name: Get last successful run timestamp
+        id: last_run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci-patchwork-trigger.yml',
+              status: 'success',
+              per_page: 1,
+              exclude_pull_requests: true,
+            });
+
+            if (runs.data.workflow_runs.length > 0) {
+              const since = runs.data.workflow_runs[0].run_started_at;
+              console.log(`Last successful run: ${since}`);
+              core.exportVariable('PATCHWORK_SINCE_DATE', since);
+            } else {
+              console.log('No previous successful run found, using default lookback');
+            }
+
       - name: Fetch new series from Patchwork
         id: fetch
         run: |
           current_time=$(date +%s)
-          since_time=$((current_time - PATCHWORK_SINCE))
+
+          if [ -n "$PATCHWORK_SINCE_DATE" ]; then
+            since_time=$(date -u -d "$PATCHWORK_SINCE_DATE" +%s)
+            max_since_time=$((current_time - PATCHWORK_MAX_SINCE))
+
+            if [ "$since_time" -lt "$max_since_time" ]; then
+              since_time=$max_since_time
+            fi
+          else
+            since_time=$((current_time - PATCHWORK_SINCE))
+          fi
+
           since=$(date -u -d @$since_time +"%Y-%m-%dT%H:%M:%SZ")
 
           pwclient event-list -p ltp -c series-completed \
