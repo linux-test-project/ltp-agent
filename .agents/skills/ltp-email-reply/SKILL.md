@@ -69,16 +69,17 @@ read its output and incorporate any runtime or build findings into the email.
   and close with a brief summary of what needs fixing.
 - If the verdict is **Needs discussion**, raise the open question clearly.
 
-### Preamble
+### Postamble
 
-Every email **must** start with a preamble before the inline review.
+Every email **must** end with a postamble after the inline review.
 This informs the recipient that the review was produced by an automated
 agent.
 
 ```
-Hi <firstname>,
+---
+Note:
 
-our agent completed the review of the patch. The full review can be
+Our agent completed the review of the patch. The full review can be
 found at: <review_url>
 
 The agent can sometimes produce false positives although often its
@@ -92,7 +93,7 @@ set, otherwise omit the "The full review can be found at:" sentence.
 ### Structure (single patch or single-patch series)
 
 ```
-<preamble>
+Hi <firstname>,
 
 On <date>, <author> wrote:
 > <patch subject line>
@@ -106,6 +107,8 @@ On <date>, <author> wrote:
 <comment>
 
 [...]
+
+<postamble>
 
 [OR if Approved:]
 Reviewed-by: <LTP AI Reviewer> <<ltp-ai@noreply.github.com>>
