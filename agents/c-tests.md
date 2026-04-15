@@ -17,7 +17,6 @@ Every C test MUST follow this structure:
 
 /*\
  * High-level RST-formatted test description goes here.
- * Explain _what_ is being tested (exported to docs).
  *
  * The following part is OPTIONAL:
  * [Algorithm]
@@ -181,6 +180,17 @@ static struct tst_test test = { .test_all = run };
 ### 15. Deprecated Features
 
 - MUST NOT define `[Description]` in the test description section
+
+### 16. Test high-level description
+
+- The `/*\ ... */` doc comment MUST explain _what_ syscall, feature, or
+  behavior is being tested (this block is exported to documentation).
+- Flag if the description is missing, empty, or too generic (e.g.
+  "Test for foo()" without stating what aspect of foo() is verified).
+- Flag if the description looks copy-pasted from another test (e.g.
+  references a different syscall or file name).
+- When flagging, suggest a concrete replacement based on what the test
+  code actually does.
 
 ## New Syscalls Testing
 
