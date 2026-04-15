@@ -51,6 +51,21 @@ read its output and incorporate any runtime or build findings into the email.
 - If smoke test was skipped/incomplete, do NOT mention it — only include
   results that were actually obtained.
 
+### Step 1.5: Get pre-existing issue findings (if available)
+
+Check if the `/ltp-review` output contains a **Pre-existing (optional)**
+section. If it does, include it as an informational note at the end of
+the email, before the postamble:
+
+```
+Note: the following pre-existing issues were noticed in the surrounding
+code (not introduced by this patch):
+
+- <file>:<line> — <issue>
+```
+
+If the section is absent, do NOT add this note.
+
 ---
 
 ## Phase 2: Compose the Email

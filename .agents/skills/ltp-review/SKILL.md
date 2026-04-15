@@ -121,6 +121,11 @@ Read full changed files for context, but only flag issues that meet one of:
 
 Do NOT flag pre-existing style issues or old API usage as review failures.
 
+When reading full files for context, specifically watch for pre-existing
+memory issues such as leaks (`malloc`/`mmap` without matching
+`free`/`munmap`), use-after-free, double-free, uninitialized reads, or
+buffer overflows.
+
 If you notice pre-existing issues unrelated to the patch, list them separately
 under a **### Pre-existing (optional)** section after the main review. These
 are informational only and do NOT affect the verdict.
