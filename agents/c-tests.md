@@ -909,18 +909,18 @@ TST_EXP_PASS(syscall(args));
 
 ```c
 /* WRONG: manual size comparison after TEST() */
-TEST(read(fd, buf, SIZE));
+TEST(syscall(args));
 
-if (TST_RET != SIZE) {
-    tst_res(TFAIL, "read returned %ld, expected %d", TST_RET, SIZE);
+if (TST_RET != expected_size) {
+    tst_res(TFAIL, "syscall returned %ld, expected %d", TST_RET, expected_size);
     return;
 }
 
-tst_res(TPASS, "read returned expected size");
+tst_res(TPASS, "syscall returned expected size");
 
 /* CORRECT: use TST_EXP_PASS + TST_EXP_EQ_SSZ */
-TST_EXP_PASS(read(fd, buf, SIZE));
-TST_EXP_EQ_SSZ(TST_RET, SIZE);
+TST_EXP_PASS(syscall(args));
+TST_EXP_EQ_SSZ(TST_RET, expected_size);
 ```
 
 #### Prefer TST_EXP_EQ_STRN over manual memcmp
