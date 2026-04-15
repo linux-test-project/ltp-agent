@@ -882,6 +882,77 @@ if (ptr == MAP_FAILED) {
 }
 ```
 
+#### Prefer TST_EXP_PASS over TEST() with manual success check
+
+When a `TST_EXP_*` macro can replace a `TEST()` + `if/else` +
+`tst_res()` block, ALWAYS prefer the macro. `TEST()` is still
+appropriate when the test needs custom logic beyond what any
+`TST_EXP_*` macro provides (e.g. multiple side-effect checks after
+one syscall).
+
+```c
+/* WRONG: TEST() with manual success check */
+TEST(syscall(args));
+
+if (TST_RET == -1) {
+    tst_res(TFAIL | TTERRNO, "syscall failed");
+    return;
+}
+
+tst_res(TPASS, "syscall returned %ld", TST_RET);
+
+/* CORRECT: use TST_EXP_PASS */
+TST_EXP_PASS(syscall(args));
+```
+
+#### Prefer TST_EXP_EQ_SSZ over TEST() with manual size comparison
+
+```c
+/* WRONG: manual size comparison after TEST() */
+TEST(read(fd, buf, SIZE));
+
+if (TST_RET != SIZE) {
+    tst_res(TFAIL, "read returned %ld, expected %d", TST_RET, SIZE);
+    return;
+}
+
+tst_res(TPASS, "read returned expected size");
+
+/* CORRECT: use TST_EXP_PASS + TST_EXP_EQ_SSZ */
+TST_EXP_PASS(read(fd, buf, SIZE));
+TST_EXP_EQ_SSZ(TST_RET, SIZE);
+```
+
+#### Prefer TST_EXP_EQ_STRN over manual memcmp
+
+```c
+/* WRONG: manual memcmp with tst_res */
+if (memcmp(write_buf, read_buf, SIZE)) {
+    tst_res(TFAIL, "data mismatch");
+    return;
+}
+
+tst_res(TPASS, "data matches");
+
+/* CORRECT: use TST_EXP_EQ_STRN */
+TST_EXP_EQ_STRN(write_buf, read_buf, SIZE);
+```
+
+#### Prefer TST_EXP_EQ_STR over manual strcmp
+
+```c
+/* WRONG: manual strcmp with tst_res */
+if (strcmp(buf, expected)) {
+    tst_res(TFAIL, "string mismatch");
+    return;
+}
+
+tst_res(TPASS, "string matches");
+
+/* CORRECT: use TST_EXP_EQ_STR */
+TST_EXP_EQ_STR(buf, expected);
+```
+
 ### Memory Allocations
 
 #### Release mmap() allocations
