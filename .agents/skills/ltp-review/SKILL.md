@@ -84,7 +84,9 @@ is **clear and informative**:
 - **M3 One logical change**: Each commit is a single, self-contained change.
   Each patch MUST compile on its own and MUST NOT introduce intermediate
   breakage. Flag patches that mix unrelated changes (e.g. a bugfix bundled
-  with a rename, or a new test bundled with cleanup of an old one).
+  with a rename, or a new test bundled with cleanup of an old one). A patch
+  that adds a new test case MUST NOT add more than one new test case —
+  split them into separate commits.
 - **M4 Fixes tag**: If fixing a bug, `Fixes:` tag is present. The tag MUST be
   present in the ending section of the commit message, not at the beginning.
 - **M5 Tags at the end**: All tags (e.g. `Signed-off-by:`, `Fixes:`,
