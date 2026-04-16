@@ -58,13 +58,13 @@ section. If it does, include it as an informational note at the end of
 the email, before the postamble:
 
 ```
-Note: the following pre-existing issues were noticed in the surrounding
-code (not introduced by this patch):
+Pre-existing issues noticed in the surrounding code (not introduced
+by this patch):
 
 - <file>:<line> — <issue>
 ```
 
-If the section is absent, do NOT add this note.
+If the section is absent, do NOT add this block.
 
 ---
 
