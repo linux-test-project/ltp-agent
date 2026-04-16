@@ -86,9 +86,9 @@ If the section is absent, do NOT add this block.
 
 ### Postamble
 
-Every email **must** end with a postamble after the inline review.
-This informs the recipient that the review was produced by an automated
-agent.
+Every email **must** end with a postamble after the inline review,
+followed by `Regards, LTP AI Reviewer`. This informs the recipient
+that the review was produced by an automated agent.
 
 ```
 ---
@@ -100,6 +100,9 @@ found at: <review_url>
 The agent can sometimes produce false positives although often its
 findings are genuine. If you find issues with the review, please
 comment this email or ignore the suggestions.
+
+Regards,
+LTP AI Reviewer
 ```
 
 `<review_url>` is built from the environment variable `REVIEW_URL` if
@@ -123,13 +126,10 @@ On <date>, <author> wrote:
 
 [...]
 
+[if Approved:]
+Reviewed-by: LTP AI Reviewer <ltp-ai@noreply.github.com>
+
 <postamble>
-
-[OR if Approved:]
-Reviewed-by: <LTP AI Reviewer> <<ltp-ai@noreply.github.com>>
-
-Regards,
-<LTP AI Reviewer>
 ```
 
 ### Structure (multi-patch series)
@@ -163,8 +163,7 @@ On <date>, <author> wrote:
 
 <comment>
 
-Regards,
-<LTP AI Reviewer>
+<postamble>
 ```
 
 ### Tone
