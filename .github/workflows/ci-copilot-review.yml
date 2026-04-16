@@ -47,10 +47,9 @@ jobs:
           sudo apt-get install -yqq man-db manpages-dev manpages-posix-dev git-email
           sudo git clone --depth 1 https://github.com/torvalds/linux /usr/src/linux
 
-      - name: Install pwclient and b4
+      - name: Install pwclient
         run: |
           pip install 'pwclient @ git+https://github.com/getpatchwork/pwclient'
-          pip install b4
 
           cat > ~/.pwclientrc <<EOF
           [options]
@@ -90,7 +89,9 @@ jobs:
           git config user.name "LTP CI"
           git config user.email "ltp-ci@noreply.github.com"
           git checkout -b "review/series-${{ inputs.SERIES_ID }}" master
-          b4 shazam "${{ steps.series.outputs.msgid }}"
+          curl -sL "$PATCHWORK_URL/series/${{ inputs.SERIES_ID }}/mbox/" -o /tmp/series.mbox
+          git am /tmp/series.mbox
+          rm -f /tmp/series.mbox
 
           echo "### Patch Series" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
