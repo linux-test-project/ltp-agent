@@ -50,6 +50,9 @@ When reviewing or writing C tests, verify ALL of the following:
   mixed declarations as errors
 - Identifiers e.g. function, variable, macro names must not start with
   underscore since these are reserved for compiler, kernel, and libc
+- MUST NOT use curly braces around single line statements
+- MUST NOT add comments that describe obvious, i.e. literal translation of what
+  the code does into the english
 
 ### 2. API Usage
 
