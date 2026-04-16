@@ -95,6 +95,7 @@ When reviewing or writing C tests, verify ALL of the following:
 ### 8. Tagging
 
 - Regression tests MUST include `.tags` in `struct tst_test`
+- Do NOT suggest adding GitHub PRs or GitHub issue URLs to `.tags`
 
 ### 9. Cleanup
 
