@@ -61,11 +61,33 @@ When reviewing or writing C tests, verify ALL of the following:
 - MUST use `struct tst_test` for configuration
 - Handlers MUST be thin; logic goes in `.setup` and `.cleanup` callbacks
 
-### 3. Syscall Usage
+### 3. Test Execution Model
+
+The LTP framework drives test callbacks in a specific order. Understanding
+this lifecycle is essential for judging resource management, state reuse,
+and iteration safety.
+
+- `.setup` — called **once** before all test iterations
+- `.test` / `.test_all` — called **per iteration** (the `-i N` option
+  controls how many times)
+- `.cleanup` — called **once** after all iterations complete, and also on
+  `tst_brk()` fatal errors
+
+Because `.setup` and `.cleanup` are one-shot, resources allocated in
+`.setup` and released in `.cleanup` do not need guards against repeated
+calls (e.g. resetting a pointer to `NULL` after `SAFE_MUNMAP()` in
+`.cleanup` is unnecessary — there is no subsequent iteration that could
+double-free it).
+
+Conversely, `.test` / `.test_all` may run many times, so any state
+modified during a test iteration MUST be safe for re-entry (see rule 11
+on static variable re-initialization).
+
+### 4. Syscall Usage
 
 - Syscall usage MUST match man pages and kernel code
 
-### 4. File Organization
+### 5. File Organization
 
 - New test binary MUST be added to corresponding `.gitignore`
 - Datafiles go in `datafiles/` subdirectory (installed to `testcases/data/$TCID`)
@@ -74,57 +96,57 @@ When reviewing or writing C tests, verify ALL of the following:
 - Sub-executables MUST use `$TESTNAME_` prefix
 - MUST use `.needs_tmpdir = 1` for temp files (work in current directory)
 
-### 5. Result Reporting
+### 6. Result Reporting
 
 - MUST use `tst_res()` for results: `TPASS`, `TFAIL`, `TCONF`, `TBROK`, `TINFO`
 - MUST use `tst_brk()` for fatal errors that abort the test
 - MUST use `TEST()` macro to capture return value (`TST_RET`) and errno (`TST_ERR`)
 - MUST return `TCONF` (not `TFAIL`) when feature is unavailable
 
-### 6. Safe Macros
+### 7. Safe Macros
 
 - MUST use `SAFE_*` macros for system calls that have a `SAFE_*` version in `include/`
 - Safe macros are defined in `include/` directory (search `tst_*.h` headers)
 - If no `SAFE_*` version exists, verify whether one can be added; otherwise use manual error handling
 
-### 7. Kernel Version Handling
+### 8. Kernel Version Handling
 
 - MUST use `.min_kver` for kernel version gating
 - MUST prefer runtime checks over compile-time checks
 
-### 8. Tagging
+### 9. Tagging
 
 - Regression tests MUST include `.tags` in `struct tst_test`
 - Do NOT suggest adding GitHub PRs or GitHub issue URLs to `.tags`
 
-### 9. Cleanup
+### 10. Cleanup
 
 - Cleanup MUST run on ALL exit paths
 - MUST unmount, restore sysctls, delete temp files, kill processes
 
-### 10. Static Variables
+### 11. Static Variables
 
 - Static variables MUST be initialized before use in test logic (for `-i` option)
 - Static allocated variables MUST be released in cleanup if allocated in setup
 
-### 11. Memory Allocation
+### 12. Memory Allocation
 
 - Memory MUST be correctly deallocated
 - EXCEPTION: If `.bufs` is used, ignore check for memory allocated with it
 
-### 12. String Handling
+### 13. String Handling
 
 - MUST use `snprintf()` when combining strings
 - MUST use `PATH_MAX` for path buffers, NOT custom size macros
 
-### 13. Architecture-Specific Tests
+### 14. Architecture-Specific Tests
 
 - MUST use `.supported_archs` in `struct tst_test` when the target architectures
   are supported by the framework (see `lib/tst_arch.c`)
 - `#if defined(...)` arch guards are only acceptable when the target architecture
   is not supported by the framework
 
-### 14. Compile-time Feature Guards (`HAVE_*`)
+### 15. Compile-time Feature Guards (`HAVE_*`)
 
 When the entire test depends on a compile-time feature flag (e.g. `HAVE_NUMA_V2`,
 `HAVE_SYS_XATTR_H`), the `#ifdef` MUST wrap ALL test code at the file level —
@@ -181,11 +203,11 @@ static struct tst_test test = { .test_all = run };
 #endif
 ```
 
-### 15. Deprecated Features
+### 16. Deprecated Features
 
 - MUST NOT define `[Description]` in the test description section
 
-### 16. Test high-level description
+### 17. Test high-level description
 
 - The `/*\ ... */` doc comment MUST explain _what_ syscall, feature, or
   behavior is being tested (this block is exported to documentation).
