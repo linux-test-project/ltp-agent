@@ -217,6 +217,13 @@ static struct tst_test test = { .test_all = run };
   references a different syscall or file name).
 - When flagging, suggest a concrete replacement based on what the test
   code actually does.
+- When referring to raw syscall or syscall libc wrapper in `/*\ ... */`
+  ALWAYS use formatting with correct manpage section, e.g.:
+  ``:manpage:`execve(2)` ``, which creates link to the man page
+  [`execve(2)`](https://man7.org/linux/man-pages/man2/execve.2.html)
+  in our [test catalog](https://linux-test-project.readthedocs.io/en/latest/users/test_catalog.html).
+- Ordered and bulleted lists MUST be separated from the previous text by a
+  blank line.
 
 ## New Syscalls Testing
 
@@ -1209,12 +1216,61 @@ static struct tst_test test = {
 };
 ```
 
+```c
+static struct tcase {
+	const char *desc;
+	int fd;
+	int exp_errno;
+	bool foo_flag;
+	bool bar_flag;
+} tcases[] = {
+	/* WRONG: not using designated initializers, repeating EBADF. */
+	{ "EBADF", -1, EBADF, 0, 0 },
+	/* ... */
+};
+
+static void setup(void)
+{
+	int fd = SAFE_OPEN("close02", O_CREAT | O_RDWR, 0600);
+	/* WRONG: using array index is error-prone. */
+	tcases[1].fd = fd;
+}
+```
+
+```c
+/* CORRECT: use macros for Stringification (DRY) */
+#define DESC(x) .desc = #x, .exp_type = x
+
+static int fd = -1;
+
+static struct tcase {
+	const char *desc;
+	/* CORRECT: manipulate with struct members via static variables */
+	int *fd;
+	int exp_errno;
+	bool foo_flag;
+} tcases[] = {
+	/* CORRECT: use designated initializers to avoid default values */
+	{ DESC(EBADF), .fd = &fd },
+	/* ... */
+};
+
+static void setup(void)
+{
+	/* CORRECT: manipulate with struct members via static variables */
+	fd = SAFE_OPEN("close02", O_CREAT | O_RDWR, 0600);
+}
+```
+
 Key rules:
 
 - `.test` (takes `unsigned int n`) is used when there are multiple test cases.
 - `.test_all` (takes no arguments) is used only when there is a single test case.
 - NEVER use separate per-case functions called from `run()`.
 - NEVER use `.test_all` when multiple cases exist.
+- NEVER use `struct tcase` array index in the setup to modify item
+  (error-prone), instead use pointers to static variables which can be modified
+  without using indexes.
 
 ### Path Buffers
 
