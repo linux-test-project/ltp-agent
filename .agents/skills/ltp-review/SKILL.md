@@ -93,7 +93,7 @@ is **clear and informative**:
   `Suggested-by:`, `Reviewed-by:`, `Acked-by:`, `Reported-by:`, `Link:`,
   `Closes:`, `Cc:`) MUST appear at the end of the commit message body,
   after the explanatory text — not at the beginning or interleaved within
-  it.
+  it. The `Signed-off-by:` tag MUST be present.
 - **M6 Series ordering** (multi-commit only): Commits are in logical order
   (e.g. helper/library changes before the test that uses them, cleanup
   before new code that depends on it). Each intermediate commit must be
