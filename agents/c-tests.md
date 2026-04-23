@@ -617,6 +617,50 @@ if (fd != -1)
 
 ### Tests Results
 
+#### Report results with `tst_res()`, NEVER via return values
+
+Test results MUST be reported by calling `tst_res()` or `tst_brk()` directly
+at the point where the outcome is determined. NEVER propagate pass/fail status
+through function return values, flags, or variables — this obscures what was
+actually tested and makes the output harder to trace back to the source.
+
+WRONG — result propagated via return value:
+
+```c
+static int check_result(int val, int expected)
+{
+    if (val != expected)
+        return 1;
+
+    return 0;
+}
+
+static void run(void)
+{
+    int ret;
+
+    TEST(syscall_under_test());
+
+    /* result is invisible in the check function */
+    if (check_result(TST_RET, 0))
+        tst_res(TFAIL, "unexpected return value");
+    else
+        tst_res(TPASS, "syscall succeeded");
+}
+```
+
+CORRECT — result reported directly where it is checked:
+
+```c
+static void run(void)
+{
+    TST_EXP_PASS(syscall_under_test());
+}
+```
+
+If a helper function performs multiple checks, it MUST call `tst_res()`
+itself for each check rather than returning a status code to the caller.
+
 #### TPASS on numbers equality
 
 ALWAYS prefer `TST_EXP_EQ_LI` over numeric equality statements which are
