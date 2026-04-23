@@ -108,6 +108,8 @@ on static variable re-initialization).
 - MUST use `SAFE_*` macros for system calls that have a `SAFE_*` version in `include/`
 - Safe macros are defined in `include/` directory (search `tst_*.h` headers)
 - If no `SAFE_*` version exists, verify whether one can be added; otherwise use manual error handling
+- `SAFE_CLOSE()` sets the variable to `-1`, so the `cleanup()` guards are safe
+  even if `run()` already closed the fd before the abort.
 
 ### 8. Kernel Version Handling
 
@@ -518,6 +520,77 @@ ALWAYS rely on `SAFE_CLOSE()` to handle the reset:
 /* CORRECT: SAFE_CLOSE() sets fd = -1 internally */
 if (fd != -1)
     SAFE_CLOSE(fd);
+```
+
+#### Ensure resources are released in `cleanup()` after `tst_brk()` or failing `SAFE_*` macros
+
+`tst_brk()` and `SAFE_*` macros can abort `run()` at any point by jumping
+to `cleanup()`. If a resource is acquired in `run()` and only released at
+the end of `run()`, the release is skipped on abort and the resource leaks.
+
+This is especially critical for resources that outlive the process — such as
+mounted filesystems, SysV IPC objects (shared memory, semaphores, message
+queues), loop devices, modified sysctls or `/proc`/`/sys` values, and cgroups.
+
+WRONG — mount done in `run()` with no `cleanup()`, leaked if `SAFE_WRITE`
+aborts:
+
+```c
+static void run(void)
+{
+    int fd;
+
+    SAFE_MOUNT("none", MNTPOINT, "tmpfs", 0, NULL);
+
+    fd = SAFE_OPEN(MNTPOINT "/file", O_CREAT | O_RDWR, 0644);
+    SAFE_WRITE(SAFE_WRITE_ALL, fd, "x", 1); /* may call tst_brk() */
+
+    /* WRONG: these are never reached on abort — mount persists! */
+    SAFE_CLOSE(fd);
+    SAFE_UMOUNT(MNTPOINT);
+}
+
+static struct tst_test test = {
+    .test_all = run,
+    .needs_root = 1,
+    .needs_tmpdir = 1,
+};
+```
+
+CORRECT — state tracked in statics, `cleanup()` handles all exit paths:
+
+```c
+static int fd = -1;
+static int mounted;
+
+static void run(void)
+{
+    SAFE_MOUNT("none", MNTPOINT, "tmpfs", 0, NULL);
+    mounted = 1;
+
+    fd = SAFE_OPEN(MNTPOINT "/file", O_CREAT | O_RDWR, 0644);
+    SAFE_WRITE(SAFE_WRITE_ALL, fd, "x", 1);
+
+    SAFE_CLOSE(fd);
+    SAFE_UMOUNT(MNTPOINT);
+    mounted = 0;
+}
+
+static void cleanup(void)
+{
+    if (fd != -1)
+        SAFE_CLOSE(fd);
+
+    if (mounted)
+        SAFE_UMOUNT(MNTPOINT);
+}
+
+static struct tst_test test = {
+    .test_all = run,
+    .cleanup = cleanup,
+    .needs_root = 1,
+    .needs_tmpdir = 1,
+};
 ```
 
 #### Use `fd != -1` to check file descriptor validity
