@@ -661,6 +661,50 @@ static void run(void)
 If a helper function performs multiple checks, it MUST call `tst_res()`
 itself for each check rather than returning a status code to the caller.
 
+#### Report results with `tst_res()` in children, NEVER via exit values
+
+The LTP library automatically propagates `tst_res()` calls from children to the
+parent. NEVER encode pass/fail as the child's exit code and interpret it in the
+parent — this obscures what was actually tested and loses the error message
+context.
+
+WRONG — child exit code used to propagate result:
+
+```c
+static void run(void)
+{
+    int status;
+    pid_t pid = SAFE_FORK();
+
+    if (!pid) {
+        TEST(syscall_under_test());
+        if (TST_RET != 0)
+            exit(1);
+        exit(0);
+    }
+
+    SAFE_WAITPID(pid, &status, 0);
+
+    /* WRONG: parent guesses what happened in the child */
+    if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+        tst_res(TPASS, "syscall succeeded");
+    else
+        tst_res(TFAIL, "syscall failed");
+}
+```
+
+CORRECT — child calls `tst_res()` directly, library propagates to parent:
+
+```c
+static void run(void)
+{
+    if (!SAFE_FORK()) {
+        TST_EXP_PASS(syscall_under_test());
+        exit(0);
+    }
+}
+```
+
 #### TPASS on numbers equality
 
 ALWAYS prefer `TST_EXP_EQ_LI` over numeric equality statements which are
