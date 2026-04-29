@@ -84,7 +84,7 @@ Every Open POSIX test MUST follow this structure:
 #include <stdio.h>
 #include "posixtest.h"
 
-int main(void)
+int test_main(int argc PTS_ATTRIBUTE_UNUSED, char **argv PTS_ATTRIBUTE_UNUSED)
 {
     /* Test implementation */
 
@@ -121,7 +121,10 @@ When writing or modifying Open POSIX tests, verify ALL of the following:
 ### 4. API Usage
 
 - MUST include `posixtest.h`
-- MUST define `main()` function (returns int)
+- MUST define `test_main()` as the test entry point (**NOT** `main()`)
+  - The real `main()` is provided by `lib/common.c` and calls `test_main()`
+  - Signature: `int test_main(int argc PTS_ATTRIBUTE_UNUSED, char **argv PTS_ATTRIBUTE_UNUSED)`
+  - Use `PTS_ATTRIBUTE_UNUSED` to suppress warnings on unused parameters
 - MUST use PTS return codes:
   - `PTS_PASS` (0) — Test passed
   - `PTS_FAIL` (1) — Test failed
@@ -195,7 +198,7 @@ When writing or modifying Open POSIX tests, verify ALL of the following:
 #include <string.h>
 #include "posixtest.h"
 
-int main(void)
+int test_main(int argc PTS_ATTRIBUTE_UNUSED, char **argv PTS_ATTRIBUTE_UNUSED)
 {
     pthread_mutex_t mutex;
     int ret;
@@ -237,6 +240,7 @@ int main(void)
 /* WRONG: Missing license header */
 #include "posixtest.h"
 
+/* WRONG: Defining main() instead of test_main() */
 int main(void)
 {
     pthread_mutex_t mutex;
