@@ -1393,17 +1393,17 @@ pointer to a static variable in the struct and modify the static variable:
 ```c
 /* WRONG */
 static struct tcase {
-	int val;
-	int exp_err;
+    int val;
+    int exp_err;
 } tcases[] = {
-	{-1, EINVAL},
-	{0, ENOENT},
+    {-1, EINVAL},
+    {0, ENOENT},
 };
 
 static void setup(void)
 {
-	/* WRONG: array index breaks when entries are reordered */
-	tcases[1].val = SAFE_OPEN("testfile", O_RDWR);
+    /* WRONG: array index breaks when entries are reordered */
+    tcases[1].val = SAFE_OPEN("testfile", O_RDWR);
 }
 ```
 
@@ -1412,17 +1412,17 @@ static void setup(void)
 static int fd = -1;
 
 static struct tcase {
-	int *val;
-	int exp_err;
+    int *val;
+    int exp_err;
 } tcases[] = {
-	{.exp_err = EINVAL},
-	{.val = &fd, .exp_err = ENOENT},
+    {.exp_err = EINVAL},
+    {.val = &fd, .exp_err = ENOENT},
 };
 
 static void setup(void)
 {
-	/* CORRECT: modify via static variable, not array index */
-	fd = SAFE_OPEN("testfile", O_RDWR);
+    /* CORRECT: modify via static variable, not array index */
+    fd = SAFE_OPEN("testfile", O_RDWR);
 }
 ```
 
@@ -1434,12 +1434,12 @@ stringification macro to avoid duplication (DRY):
 ```c
 /* WRONG: description duplicates the macro name */
 static struct tcase {
-	const char *desc;
-	int exp_err;
+    const char *desc;
+    int exp_err;
 } tcases[] = {
-	{"EINVAL", EINVAL},
-	{"ENOENT", ENOENT},
-	{"EACCES", EACCES},
+    {"EINVAL", EINVAL},
+    {"ENOENT", ENOENT},
+    {"EACCES", EACCES},
 };
 ```
 
@@ -1448,12 +1448,12 @@ static struct tcase {
 #define TC(x) {.desc = #x, .exp_err = x}
 
 static struct tcase {
-	const char *desc;
-	int exp_err;
+    const char *desc;
+    int exp_err;
 } tcases[] = {
-	TC(EINVAL),
-	TC(ENOENT),
-	TC(EACCES),
+    TC(EINVAL),
+    TC(ENOENT),
+    TC(EACCES),
 };
 ```
 
