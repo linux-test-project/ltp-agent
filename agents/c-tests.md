@@ -219,6 +219,13 @@ static struct tst_test test = { .test_all = run };
   references a different syscall or file name).
 - When flagging, suggest a concrete replacement based on what the test
   code actually does.
+- When referring to raw syscall or syscall libc wrapper in `/*\ ... */`
+  ALWAYS use formatting with correct manpage section, e.g.:
+  ``:manpage:`execve(2)` ``, which creates link to the man page
+  [`execve(2)`](https://man7.org/linux/man-pages/man2/execve.2.html)
+  in our [test catalog](https://linux-test-project.readthedocs.io/en/latest/users/test_catalog.html).
+- Ordered and bulleted lists MUST be separated from the previous text by a
+  blank line.
 
 ## New Syscalls Testing
 
@@ -1376,6 +1383,79 @@ Key rules:
 - `.test_all` (takes no arguments) is used only when there is a single test case.
 - NEVER use separate per-case functions called from `run()`.
 - NEVER use `.test_all` when multiple cases exist.
+
+#### Modifying tcase Items in setup()
+
+NEVER use `struct tcase` array indexes to modify items in `setup()` — this is
+error-prone and breaks silently when entries are reordered. Instead, store a
+pointer to a static variable in the struct and modify the static variable:
+
+```c
+/* WRONG */
+static struct tcase {
+	int val;
+	int exp_err;
+} tcases[] = {
+	{-1, EINVAL},
+	{0, ENOENT},
+};
+
+static void setup(void)
+{
+	/* WRONG: array index breaks when entries are reordered */
+	tcases[1].val = SAFE_OPEN("testfile", O_RDWR);
+}
+```
+
+```c
+/* CORRECT */
+static int fd = -1;
+
+static struct tcase {
+	int *val;
+	int exp_err;
+} tcases[] = {
+	{.exp_err = EINVAL},
+	{.val = &fd, .exp_err = ENOENT},
+};
+
+static void setup(void)
+{
+	/* CORRECT: modify via static variable, not array index */
+	fd = SAFE_OPEN("testfile", O_RDWR);
+}
+```
+
+#### Stringification Macros for Test Cases
+
+When the test case description repeats an enum or macro name, use a
+stringification macro to avoid duplication (DRY):
+
+```c
+/* WRONG: description duplicates the macro name */
+static struct tcase {
+	const char *desc;
+	int exp_err;
+} tcases[] = {
+	{"EINVAL", EINVAL},
+	{"ENOENT", ENOENT},
+	{"EACCES", EACCES},
+};
+```
+
+```c
+/* CORRECT: stringification macro eliminates duplication */
+#define TC(x) {.desc = #x, .exp_err = x}
+
+static struct tcase {
+	const char *desc;
+	int exp_err;
+} tcases[] = {
+	TC(EINVAL),
+	TC(ENOENT),
+	TC(EACCES),
+};
+```
 
 ### Path Buffers
 
