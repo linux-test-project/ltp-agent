@@ -87,8 +87,8 @@ is **clear and informative**:
   with a rename, or a new test bundled with cleanup of an old one). A patch
   that adds a new test case MUST NOT add more than one new test case —
   split them into separate commits.
-- **M4 Fixes tag**: If fixing a bug, `Fixes:` tag is present. The tag MUST be
-  present in the ending section of the commit message, not at the beginning.
+- **M4 Fixes tag**: If `Fixes:` tag is present, it MUST refer to a valid
+  commit in the git history.
 - **M5 Tags at the end**: All tags (e.g. `Signed-off-by:`, `Fixes:`,
   `Suggested-by:`, `Reviewed-by:`, `Acked-by:`, `Reported-by:`, `Link:`,
   `Closes:`, `Cc:`) MUST appear at the end of the commit message body,
