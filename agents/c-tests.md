@@ -87,7 +87,28 @@ on static variable re-initialization).
 
 - Syscall usage MUST match man pages and kernel code
 
-### 5. File Organization
+### 5. Build System
+
+ALWAYS use the LTP build system for new tests. NEVER write custom Makefiles
+with explicit compiler invocations, custom targets, or ad-hoc rules.
+
+The standard test Makefile is:
+
+```make
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+top_srcdir		?= ../../../..
+
+include $(top_srcdir)/include/mk/testcases.mk
+
+include $(top_srcdir)/include/mk/generic_leaf_target.mk
+```
+
+Adjust `top_srcdir` to match the directory depth relative to the LTP root.
+This is all that is needed — the build system automatically discovers all
+`.c` files, creates one binary per file, and links each against `-lltp`.
+
+### 6. File Organization
 
 - New test binary MUST be added to corresponding `.gitignore`
 - Datafiles go in `datafiles/` subdirectory (installed to `testcases/data/$TCID`)
@@ -96,14 +117,14 @@ on static variable re-initialization).
 - Sub-executables MUST use `$TESTNAME_` prefix
 - MUST use `.needs_tmpdir = 1` for temp files (work in current directory)
 
-### 6. Result Reporting
+### 7. Result Reporting
 
 - MUST use `tst_res()` for results: `TPASS`, `TFAIL`, `TCONF`, `TBROK`, `TINFO`
 - MUST use `tst_brk()` for fatal errors that abort the test
 - MUST use `TEST()` macro to capture return value (`TST_RET`) and errno (`TST_ERR`)
 - MUST return `TCONF` (not `TFAIL`) when feature is unavailable
 
-### 7. Safe Macros
+### 8. Safe Macros
 
 - MUST use `SAFE_*` macros for system calls that have a `SAFE_*` version in `include/`
 - Safe macros are defined in `include/` directory (search `tst_*.h` headers)
@@ -111,44 +132,44 @@ on static variable re-initialization).
 - `SAFE_CLOSE()` sets the variable to `-1`, so the `cleanup()` guards are safe
   even if `run()` already closed the fd before the abort.
 
-### 8. Kernel Version Handling
+### 9. Kernel Version Handling
 
 - MUST use `.min_kver` for kernel version gating
 - MUST prefer runtime checks over compile-time checks
 
-### 9. Tagging
+### 10. Tagging
 
 - Regression tests MUST include `.tags` in `struct tst_test`
 - Do NOT suggest adding GitHub PRs or GitHub issue URLs to `.tags`
 
-### 10. Cleanup
+### 11. Cleanup
 
 - Cleanup MUST run on ALL exit paths
 - MUST unmount, restore sysctls, delete temp files, kill processes
 
-### 11. Static Variables
+### 12. Static Variables
 
 - Static variables MUST be initialized before use in test logic (for `-i` option)
 - Static allocated variables MUST be released in cleanup if allocated in setup
 
-### 12. Memory Allocation
+### 13. Memory Allocation
 
 - Memory MUST be correctly deallocated
 - EXCEPTION: If `.bufs` is used, ignore check for memory allocated with it
 
-### 13. String Handling
+### 14. String Handling
 
 - MUST use `snprintf()` when combining strings
 - MUST use `PATH_MAX` for path buffers, NOT custom size macros
 
-### 14. Architecture-Specific Tests
+### 15. Architecture-Specific Tests
 
 - MUST use `.supported_archs` in `struct tst_test` when the target architectures
   are supported by the framework (see `lib/tst_arch.c`)
 - `#if defined(...)` arch guards are only acceptable when the target architecture
   is not supported by the framework
 
-### 15. Compile-time Feature Guards (`HAVE_*`)
+### 16. Compile-time Feature Guards (`HAVE_*`)
 
 When the entire test depends on a compile-time feature flag (e.g. `HAVE_NUMA_V2`,
 `HAVE_SYS_XATTR_H`), the `#ifdef` MUST wrap ALL test code at the file level —
@@ -205,7 +226,7 @@ static struct tst_test test = { .test_all = run };
 #endif
 ```
 
-### 16. Deprecated Features
+### 17. Deprecated Features
 
 - MUST NOT define `[Description]` in the test description section
 
