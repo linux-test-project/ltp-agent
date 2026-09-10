@@ -105,8 +105,16 @@ LTP AI Reviewer
 ### Issues found (multi-patch series)
 
 If there are issues in one of the patches, reply once, to the first patch.
-Use `--- [PATCH N/M] ---` markers between per-patch comments. ONLY include
-patches that have findings.
+Separate per-patch comments with a marker holding the full subject line of
+that patch, copied verbatim from its `Subject:` header:
+
+```
+--- [PATCH v2 15/33] keyctl23: Test KEYCTL_RESTRICT_KEYRING builtin_trusted
+```
+
+Keep the marker on a single line even if it exceeds 78 characters, and
+NEVER shorten it to just `[PATCH N/M]`. ONLY include patches that have
+findings.
 
 ```
 Hi <firstname>,
@@ -114,13 +122,13 @@ Hi <firstname>,
 On <date>, <author> wrote:
 > <cover letter or first patch subject line>
 
---- [PATCH 1/M] ---
+--- <patch 1 subject line>
 
 > [relevant diff hunk or code line]
 
 <comment>
 
---- [PATCH 3/M] ---
+--- <patch 3 subject line>
 
 > [relevant diff hunk or code line]
 
