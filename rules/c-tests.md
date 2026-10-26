@@ -651,10 +651,8 @@ CORRECT -- child calls `tst_res()` directly, library propagates to parent:
 ```c
 static void run(void)
 {
-    if (!SAFE_FORK()) {
+    if (!SAFE_FORK())
         TST_EXP_PASS(syscall_under_test());
-        exit(0);
-    }
 }
 ```
 
@@ -1213,14 +1211,15 @@ if (!child_pid) {
 /* parent code */
 ```
 
-ALWAYS call `exit(0)` at the end of the child block.
+ALWAYS call `exit(0)` at the end of the child block when parent code
+follows it.
 
 MUST NOT use `_exit()` -- use `exit(0)` instead so the LTP
 framework can propagate test results from child to parent.
 
 Example:
 
-CORRECT -- child always exits explicitly:
+CORRECT -- child exits explicitly before parent code:
 
 ```c
 child_pid = SAFE_FORK();
@@ -1230,6 +1229,40 @@ if (!child_pid) {
 }
 /* parent code */
 ```
+
+A child that returns from the test function (`.test` / `.test_all`) back
+to the LTP library is exited by the library with `exit(0)`. When the child
+code ends the test function, a trailing `exit(0)` is redundant and SHOULD
+NOT be added. Reviewers SHOULD flag it.
+
+WRONG -- redundant `exit(0)` at the end of the test function:
+
+```c
+static void run(void)
+{
+    if (SAFE_FORK())
+        return;
+
+    TST_EXP_PASS(syscall_under_test());
+    exit(0);
+}
+```
+
+CORRECT -- child returns to the library, which exits it:
+
+```c
+static void run(void)
+{
+    if (SAFE_FORK())
+        return;
+
+    TST_EXP_PASS(syscall_under_test());
+}
+```
+
+This applies ONLY to the test function itself. A child forked in
+`setup()`, in a helper function, or followed by more code in the test
+function MUST still call `exit(0)` explicitly.
 
 ### Child Process Reaping
 
@@ -1263,7 +1296,7 @@ CORRECT -- let the framework reap the child:
 static void run(void)
 {
     if (!SAFE_FORK()) {
-        exit(0);
+        /* child work */
     }
 }
 ```
