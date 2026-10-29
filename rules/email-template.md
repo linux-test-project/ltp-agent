@@ -17,6 +17,9 @@ Anything that concerns how the email looks belongs here.
 - Insert your comments directly below the relevant quoted line(s),
   separated by a blank line before and after.
 - End every review with a blank line.
+- Replace `<model>` with the name of the AI model producing the review.
+  Use the model name given in the prompt if any, otherwise your own model
+  name and version.
 
 ## Tone and Brevity
 
@@ -63,6 +66,8 @@ The agent can sometimes produce false positives although often its
 findings are genuine. If you find issues with the review, please
 comment this email or ignore the suggestions.
 
+Model: <model>
+
 Regards,
 LTP AI Reviewer
 ```
@@ -97,6 +102,8 @@ Note:
 The agent can sometimes produce false positives although often its
 findings are genuine. If you find issues with the review, please
 comment this email or ignore the suggestions.
+
+Model: <model>
 
 Regards,
 LTP AI Reviewer
@@ -138,6 +145,8 @@ Note:
 The agent can sometimes produce false positives although often its
 findings are genuine. If you find issues with the review, please
 comment this email or ignore the suggestions.
+
+Model: <model>
 
 Regards,
 LTP AI Reviewer

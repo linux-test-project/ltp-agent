@@ -116,13 +116,18 @@ jobs:
         working-directory: ltp
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
-          COPILOT_MODEL: ${{ secrets.COPILOT_MODEL }}
+          COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
           COPILOT_REASONING_EFFORT: ${{ vars.COPILOT_REASONING_EFFORT || 'high' }}
           LATEST_KERNEL: ${{ steps.kver.outputs.version }}
         run: |
           set -o pipefail
 
-          copilot -p "The latest stable kernel release is ${LATEST_KERNEL}. Use this for staging checks instead of fetching kernel.org. Man pages are available in /usr/src/man-pages. Glibc is available in /usr/src/glibc. Musl is available in /usr/src/musl. Run /ltp-review." \
+          model_info=""
+          if [ -n "$COPILOT_MODEL" ]; then
+            model_info="The AI model used for this review is ${COPILOT_MODEL}. "
+          fi
+
+          copilot -p "${model_info}The latest stable kernel release is ${LATEST_KERNEL}. Use this for staging checks instead of fetching kernel.org. Man pages are available in /usr/src/man-pages. Glibc is available in /usr/src/glibc. Musl is available in /usr/src/musl. Run /ltp-review." \
             --reasoning-effort "$COPILOT_REASONING_EFFORT" \
             --allow-all-tools \
             --deny-tool='shell(curl:*)' \
